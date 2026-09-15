@@ -1288,7 +1288,7 @@ int PostScriptFunction::exec(double *stack, int sp0) {
 	goto underflow;
       }
       nn = (int)stack[sp++];
-      if (nn < 0) {
+      if (nn < 0 || nn > psStackSize) {
 	goto invalidArg;
       }
       if (sp + nn > psStackSize) {
@@ -1404,8 +1404,8 @@ int PostScriptFunction::exec(double *stack, int sp0) {
 	goto underflow;
       }
       k = (int)stack[sp];
-      if (k < 0) {
-	goto invalidArg;
+      if (k < 0 || k > psStackSize) {
+        goto invalidArg;
       }
       if (sp + 1 + k >= psStackSize) {
 	goto underflow;
@@ -1494,8 +1494,8 @@ int PostScriptFunction::exec(double *stack, int sp0) {
       }
       k = (int)stack[sp++];
       nn = (int)stack[sp++];
-      if (nn < 0) {
-	goto invalidArg;
+      if (k < -psStackSize || k > psStackSize || nn < 0 || nn > psStackSize) {
+        goto invalidArg;
       }
       if (nn > 0) {
 	if (sp + nn > psStackSize) {

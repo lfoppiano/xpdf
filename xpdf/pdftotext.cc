@@ -182,12 +182,15 @@ int main(int argc, char *argv[]) {
     delete globalParams;
     goto err0;
   }
-  if (!ok || argc < 2 || argc > 3 || printVersion || printHelp) {
+  if (printVersion) {
+    printf("pdftotext version %s [www.xpdfreader.com]\n", xpdfVersion);
+    printf("%s\n", xpdfCopyright);
+    goto err0;
+  }
+  if (!ok || argc < 2 || argc > 3 || printHelp) {
     fprintf(stderr, "pdftotext version %s [www.xpdfreader.com]\n", xpdfVersion);
     fprintf(stderr, "%s\n", xpdfCopyright);
-    if (!printVersion) {
-      printUsage("pdftotext", "<PDF-file> [<text-file>]", argDesc);
-    }
+    printUsage("pdftotext", "<PDF-file> [<text-file>]", argDesc);
     goto err0;
   }
   fileName = argv[1];
@@ -307,7 +310,7 @@ int main(int argc, char *argv[]) {
   textOut = new TextOutputDev(textFileName->getCString(), &textOutControl,
 			      gFalse, gTrue);
   if (textOut->isOk()) {
-    doc->displayPages(textOut, firstPage, lastPage, 72, 72, 0,
+    doc->displayPages(textOut, NULL, firstPage, lastPage, 72, 72, 0,
 		      gFalse, gTrue, gFalse);
   } else {
     delete textOut;

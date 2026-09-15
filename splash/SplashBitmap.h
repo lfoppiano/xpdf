@@ -32,6 +32,39 @@
 #endif
 
 //------------------------------------------------------------------------
+// SplashBitmapMemCache
+//------------------------------------------------------------------------
+
+#define splashBitmapMemCacheSize 4
+
+struct SplashBitmapMemCacheEntry {
+  void *data;
+  int height;
+  SplashBitmapRowSize rowSize;
+};
+
+// This holds onto a small number of freed bitmaps so they can be
+// reused, avoiding system overhead for (re)allocating large chunks of
+// memory. It's not thread-safe, so it needs to be owned by a single
+// thread.
+class SplashBitmapMemCache {
+public:
+
+  SplashBitmapMemCache();
+  ~SplashBitmapMemCache();
+
+private:
+
+  void *alloc(int height, SplashBitmapRowSize rowSize);
+  void free(void *data, int height, SplashBitmapRowSize rowSize);
+
+  SplashBitmapMemCacheEntry cache[splashBitmapMemCacheSize];
+
+  friend class SplashBitmap;
+  friend class SplashAlphaBitmap;
+};
+
+//------------------------------------------------------------------------
 // SplashBitmap
 //------------------------------------------------------------------------
 
@@ -44,7 +77,7 @@ public:
   // upside-down, i.e., with the last row first in memory.
   SplashBitmap(int widthA, int heightA, int rowPad,
 	       SplashColorMode modeA, GBool alphaA,
-	       GBool topDown, SplashBitmap *parentA);
+	       GBool topDown, SplashBitmapMemCache *cacheA);
 
   ~SplashBitmap();
 
@@ -68,6 +101,8 @@ public:
   // destructor.
   SplashColorPtr takeData();
 
+  void doNotCache();
+
 private:
 
   int width, height;		// size of bitmap
@@ -79,16 +114,38 @@ private:
   Guchar *alpha;		// pointer to row zero of the alpha data
 				//   (always top-down)
 
-  // save the last-allocated (large) bitmap data and reuse if possible
-  SplashBitmap *parent;
-  SplashColorPtr oldData;
-  Guchar *oldAlpha;
-  SplashBitmapRowSize oldRowSize;
-  size_t oldAlphaRowSize;
-  int oldHeight;
+  SplashBitmapMemCache *cache;
 
   friend class Splash;
 };
 
+
+//------------------------------------------------------------------------
+// SplashAlphaBitmap
+//------------------------------------------------------------------------
+
+class SplashAlphaBitmap {
+public:
+
+  // Create a new alpha bitmap with <widthA> x <heightA> pixels.
+  SplashAlphaBitmap(int widthA, int heightA, SplashBitmapMemCache *cacheA);
+
+  ~SplashAlphaBitmap();
+
+  int getWidth() { return width; }
+  int getHeight() { return height; }
+  size_t getAlphaRowSize() { return alphaRowSize; }
+  Guchar *getAlphaPtr() { return alpha; }
+
+private:
+
+  int width, height;		// size of bitmap
+  size_t alphaRowSize;		// size of one row, in bytes
+  Guchar *alpha;		// pointer to the alpha data
+
+  SplashBitmapMemCache *cache;
+
+  friend class Splash;
+};
 
 #endif

@@ -219,12 +219,12 @@ SplashFTFont::SplashFTFont(SplashFTFontFile *fontFileA, SplashCoord *matA,
 SplashFTFont::~SplashFTFont() {
 }
 
-GBool SplashFTFont::getGlyph(int c, int xFrac, int yFrac,
+GBool SplashFTFont::getGlyph(Guint c, int xFrac, int yFrac,
 			     SplashGlyphBitmap *bitmap) {
   return SplashFont::getGlyph(c, xFrac, 0, bitmap);
 }
 
-GBool SplashFTFont::makeGlyph(int c, int xFrac, int yFrac,
+GBool SplashFTFont::makeGlyph(Guint c, int xFrac, int yFrac,
 			      SplashGlyphBitmap *bitmap) {
   SplashFTFontFile *ff;
   FT_Vector offset;
@@ -243,7 +243,7 @@ GBool SplashFTFont::makeGlyph(int c, int xFrac, int yFrac,
   FT_Set_Transform(ff->face, &matrix, &offset);
   slot = ff->face->glyph;
 
-  if (ff->codeToGID && c < ff->codeToGIDLen) {
+  if (ff->codeToGID && c < (Guint)ff->codeToGIDLen) {
     gid = ff->codeToGID[c];
   } else {
     gid = c;
@@ -321,7 +321,7 @@ struct SplashFTFontPath {
   GBool needClose;
 };
 
-SplashPath *SplashFTFont::getGlyphPath(int c) {
+SplashPath *SplashFTFont::getGlyphPath(Guint c) {
   static FT_Outline_Funcs outlineFuncs = {
 #if FREETYPE_MINOR <= 1
     (int (*)(FT_Vector *, void *))&glyphPathMoveTo,
@@ -346,7 +346,7 @@ SplashPath *SplashFTFont::getGlyphPath(int c) {
   ff->face->size = sizeObj;
   FT_Set_Transform(ff->face, &textMatrix, NULL);
   slot = ff->face->glyph;
-  if (ff->codeToGID && c < ff->codeToGIDLen) {
+  if (ff->codeToGID && c < (Guint)ff->codeToGIDLen) {
     gid = ff->codeToGID[c];
   } else {
     gid = c;

@@ -13,7 +13,6 @@
 //~     generic serif/sans-serif/monospace name)
 //~ - check that htmlDir exists and is a directory
 //~ - links:
-//~   - internal links (to pages, to named destinations)
 //~   - links from non-text content
 //~ - rotated text should go in the background image
 //~ - metadata
@@ -398,7 +397,7 @@ int HTMLGen::convertPage(
 
   // generate the background bitmap
   splashOut->setSkipText(!allTextInvisible, gFalse);
-  doc->displayPage(splashOut, pg,
+  doc->displayPage(splashOut, NULL, pg,
 		   backgroundResolution, backgroundResolution * vStretch,
 		   0, gFalse, gTrue, gFalse);
   bitmap = splashOut->getBitmap();
@@ -413,7 +412,7 @@ int HTMLGen::convertPage(
   }
 
   // get the PDF text
-  doc->displayPage(textOut, pg, 72, 72, 0, gFalse, gTrue, gFalse);
+  doc->displayPage(textOut, NULL, pg, 72, 72, 0, gFalse, gTrue, gFalse);
   doc->processLinks(textOut, pg);
   text = textOut->takeText();
   primaryDir = text->primaryDirectionIsLR() ? 1 : -1;
@@ -492,6 +491,8 @@ int HTMLGen::convertPage(
   }
   pr(writeHTML, htmlStream, "<style type=\"text/css\">\n");
   pr(writeHTML, htmlStream, ".txt { white-space:nowrap; }\n");
+  pr(writeHTML, htmlStream, ".invisible { color:rgba(0,0,0,0); }\n");
+  pr(writeHTML, htmlStream, ".invisible::selection { color:rgba(0,0,0,0.1); background:rgba(0,0,255,0.2); }\n");
   if (convertFormFields) {
     pr(writeHTML, htmlStream, ".textfield {\n");
     pr(writeHTML, htmlStream, "  border: 0;\n");
@@ -570,10 +571,11 @@ int HTMLGen::convertPage(
   if (embedBackgroundImage) {
     writeInfo.base64->flush();
     delete writeInfo.base64;
+    pr(writeHTML, htmlStream, "\"");
   }
 
   // background image element (part 2)
-  pr(writeHTML, htmlStream, "\">\n");
+  pr(writeHTML, htmlStream, ">\n");
 
   // generate the HTML text
   nextFieldID = 0;
@@ -738,6 +740,7 @@ void HTMLGen::appendSpans(GList *words, int firstWordIdx, int lastWordIdx,
       double r0 = 0, g0 = 0, b0 = 0; // make gcc happy
       VerticalAlignment vertAlign0 = vertAlignBaseline; // make gcc happy
       GString *linkURI0 = NULL;
+      int linkPage0 = 0;
 
       GBool invisible = word0->isInvisible() || word0->isRotated();
 
@@ -761,6 +764,7 @@ void HTMLGen::appendSpans(GList *words, int firstWordIdx, int lastWordIdx,
 	  vertAlign1 = vertAlignBaseline;
 	}
 	GString *linkURI1 = word1->getLinkURI();
+	int linkPage1 = word1->getLinkPage(doc);
 
 	// start of span
 	if (word1 == word0) {
@@ -769,6 +773,7 @@ void HTMLGen::appendSpans(GList *words, int firstWordIdx, int lastWordIdx,
 	  b0 = b1;
 	  vertAlign0 = vertAlign1;
 	  linkURI0 = linkURI1;
+	  linkPage0 = linkPage1;
 
 	  int i;
 	  for (i = 0; i < fonts->getLength(); ++i) {
@@ -778,6 +783,8 @@ void HTMLGen::appendSpans(GList *words, int firstWordIdx, int lastWordIdx,
 	  }
 	  if (linkURI1) {
 	    s->appendf("<a href=\"{0:t}\">", linkURI0);
+	  } else if (linkPage1 > 0) {
+	    s->appendf("<a href=\"page{0:d}.html\">", linkPage0);
 	  }
 	  // we force spans to be LTR or RTL; this is a kludge, but it's
 	  // far easier than implementing the full Unicode bidi algorithm
@@ -789,14 +796,23 @@ void HTMLGen::appendSpans(GList *words, int firstWordIdx, int lastWordIdx,
 	  } else {
 	    dirTag = " dir=\"ltr\"";
 	  }
-	  s->appendf("<span class=\"f{0:d}\"{1:s} style=\"font-size:{2:d}px;vertical-align:{3:s};{4:s}color:rgba({5:d},{6:d},{7:d},{8:d});\">",
-		     i,
-		     dirTag,
-		     (int)(fontScales[i] * word1->getFontSize() * zoom),
-		     vertAlignNames[vertAlign1],
-		     (dropCapLine && wordIdx == 0) ? "line-height:75%;" : "",
-		     (int)(r0 * 255), (int)(g0 * 255), (int)(b0 * 255),
-		     invisible ? 0 : 1);
+	  if (invisible) {
+	    s->appendf("<span class=\"f{0:d} invisible\"{1:s} style=\"font-size:{2:d}px;vertical-align:{3:s};{4:s}\">",
+		       i,
+		       dirTag,
+		       (int)(fontScales[i] * word1->getFontSize() * zoom),
+		       vertAlignNames[vertAlign1],
+		       (dropCapLine && wordIdx == 0) ? "line-height:75%;" : "");
+	  } else {
+	    s->appendf("<span class=\"f{0:d}\"{1:s} style=\"font-size:{2:d}px;vertical-align:{3:s};{4:s}color:rgba({5:d},{6:d},{7:d},{8:d});\">",
+		       i,
+		       dirTag,
+		       (int)(fontScales[i] * word1->getFontSize() * zoom),
+		       vertAlignNames[vertAlign1],
+		       (dropCapLine && wordIdx == 0) ? "line-height:75%;" : "",
+		       (int)(r0 * 255), (int)(g0 * 255), (int)(b0 * 255),
+		       invisible ? 0 : 1);
+	  }
 
 	// end of span
 	} else if (word1->getFontInfo() != word0->getFontInfo() ||
@@ -805,7 +821,8 @@ void HTMLGen::appendSpans(GList *words, int firstWordIdx, int lastWordIdx,
 		   word1->isRotated() != word0->isRotated() ||
 		   vertAlign1 != vertAlign0 ||
 		   r1 != r0 || g1 != g0 || b1 != b0 ||
-		   linkURI1 != linkURI0) {
+		   linkURI1 != linkURI0 ||
+		   linkPage1 != linkPage0) {
 	  break;
 	}
 
@@ -865,7 +882,7 @@ void HTMLGen::appendSpans(GList *words, int firstWordIdx, int lastWordIdx,
 	                      : wordIdx >= lastWordIdx);
 
       s->append("</span>");
-      if (linkURI0) {
+      if (linkURI0 || linkPage0 > 0) {
 	s->append("</a>");
       }
     }

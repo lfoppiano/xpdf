@@ -1365,6 +1365,9 @@ Annots::Annots(PDFDoc *docA) {
   }
   formFieldRefsSize = 0;
   formFieldRefs = NULL;
+#if MULTITHREADED
+  gInitMutex(&mutex);
+#endif
 }
 
 Annots::~Annots() {
@@ -1373,10 +1376,19 @@ Annots::~Annots() {
   }
   gfree(pageAnnots);
   gfree(formFieldRefs);
+#if MULTITHREADED
+  gDestroyMutex(&mutex);
+#endif
 }
 
 void Annots::loadAnnots(int page) {
+#if MULTITHREADED
+  gLockMutex(&mutex);
+#endif
   if (pageAnnots[page - 1]) {
+#if MULTITHREADED
+    gUnlockMutex(&mutex);
+#endif
     return;
   }
 
@@ -1386,6 +1398,9 @@ void Annots::loadAnnots(int page) {
   doc->getCatalog()->getPage(page)->getAnnots(&annotsObj);
   if (!annotsObj.isArray()) {
     annotsObj.free();
+#if MULTITHREADED
+    gUnlockMutex(&mutex);
+#endif
     return;
   }
 
@@ -1424,6 +1439,10 @@ void Annots::loadAnnots(int page) {
   }
 
   annotsObj.free();
+
+#if MULTITHREADED
+  gUnlockMutex(&mutex);
+#endif
 }
 
 // Build a set of object refs for AcroForm fields.
@@ -1442,21 +1461,23 @@ void Annots::loadFormFieldRefs() {
     AcroFormField *field = form->getField(i);
     Object fieldRef;
     field->getFieldRef(&fieldRef);
-    if (fieldRef.getRefNum() >= formFieldRefsSize) {
-      while (fieldRef.getRefNum() >= newFormFieldRefsSize &&
-	     newFormFieldRefsSize <= INT_MAX / 2) {
-	newFormFieldRefsSize *= 2;
+    if (fieldRef.isRef()) {
+      if (fieldRef.getRefNum() >= formFieldRefsSize) {
+	while (fieldRef.getRefNum() >= newFormFieldRefsSize &&
+	       newFormFieldRefsSize <= INT_MAX / 2) {
+	  newFormFieldRefsSize *= 2;
+	}
+	if (fieldRef.getRefNum() >= newFormFieldRefsSize) {
+	  continue;
+	}
+	formFieldRefs = (char *)grealloc(formFieldRefs, newFormFieldRefsSize);
+	for (int j = formFieldRefsSize; j < newFormFieldRefsSize; ++j) {
+	  formFieldRefs[j] = (char)0;
+	}
+	formFieldRefsSize = newFormFieldRefsSize;
       }
-      if (fieldRef.getRefNum() >= newFormFieldRefsSize) {
-	continue;
-      }
-      formFieldRefs = (char *)grealloc(formFieldRefs, newFormFieldRefsSize);
-      for (int j = formFieldRefsSize; j < newFormFieldRefsSize; ++j) {
-	formFieldRefs[j] = (char)0;
-      }
-      formFieldRefsSize = newFormFieldRefsSize;
+      formFieldRefs[fieldRef.getRefNum()] = (char)1;
     }
-    formFieldRefs[fieldRef.getRefNum()] = (char)1;
     fieldRef.free();
   }
 }
@@ -1512,6 +1533,9 @@ void Annots::add(int page, Object *annotObj) {
 void Annots::generateAnnotAppearances(int page) {
   loadAnnots(page);
   PageAnnots *pa = pageAnnots[page - 1];
+#if MULTITHREADED
+  gLockMutex(&mutex);
+#endif
   if (!pa->appearancesGenerated) {
     for (int i = 0; i < pa->annots->getLength(); ++i) {
       Annot *annot = (Annot *)pa->annots->get(i);
@@ -1519,4 +1543,7 @@ void Annots::generateAnnotAppearances(int page) {
     }
     pa->appearancesGenerated = gTrue;
   }
+#if MULTITHREADED
+  gUnlockMutex(&mutex);
+#endif
 }

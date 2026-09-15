@@ -4,7 +4,7 @@ pdftohtml(1)                General Commands Manual               pdftohtml(1)
 
 NAME
        pdftohtml  -  Portable Document Format (PDF) to HTML converter (version
-       4.05)
+       4.06)
 
 SYNOPSIS
        pdftohtml [options] PDF-file HTML-dir
@@ -47,6 +47,13 @@ OPTIONS
               tial zoom level is controlled by the '-z' option.  Specifying  a
               larger '-r' value will allow the viewer to zoom in farther with-
               out upscaling artifacts in the background.
+
+       -noframe
+              The default is to generate an 'index.html' page with  a  sidebar
+              listing  all of the pages and a viewing area containing the cur-
+              rent page in an HTML iframe. This option switches  back  to  the
+              older (pre-4.06) behavior of generating a very simple index page
+              that just has links to the pages.
 
        -vstretch number
               Specifies a vertical stretch factor.  Setting this  to  a  value
@@ -142,7 +149,7 @@ EXIT CODES
        99     Other error.
 
 AUTHOR
-       The  pdftohtml software and documentation are copyright 1996-2024 Glyph
+       The  pdftohtml software and documentation are copyright 1996-2025 Glyph
        & Cog, LLC.
 
 SEE ALSO
@@ -152,4 +159,4 @@ SEE ALSO
 
 
 
-                                  08 Feb 2024                     pdftohtml(1)
+                                  14 Nov 2025                     pdftohtml(1)

@@ -116,12 +116,15 @@ int main(int argc, char *argv[]) {
   // parse args
   fixCommandLine(&argc, &argv);
   ok = parseArgs(argDesc, &argc, argv);
-  if (!ok || argc != 2 || printVersion || printHelp) {
+  if (printVersion) {
+    printf("pdffonts version %s [www.xpdfreader.com]\n", xpdfVersion);
+    printf("%s\n", xpdfCopyright);
+    goto err0;
+  }
+  if (!ok || argc != 2 || printHelp) {
     fprintf(stderr, "pdffonts version %s [www.xpdfreader.com]\n", xpdfVersion);
     fprintf(stderr, "%s\n", xpdfCopyright);
-    if (!printVersion) {
-      printUsage("pdffonts", "<PDF-file>", argDesc);
-    }
+    printUsage("pdffonts", "<PDF-file>", argDesc);
     goto err0;
   }
   fileName = argv[1];

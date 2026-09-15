@@ -121,6 +121,8 @@ StandardSecurityHandler::StandardSecurityHandler(PDFDoc *docA,
   ownerEnc = NULL;
   userEnc = NULL;
   fileKeyLength = 0;
+  encVersion = -1;
+  encRevision = -1;
 
   //--- get the main parameters
   encryptDictA->dictLookup("V", &versionObj);

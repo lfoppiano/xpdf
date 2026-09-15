@@ -520,6 +520,7 @@ static const char *prolog[] = {
   "/Tclear { /pdfTextPath [] def } def",
   "/Tsave {",
   "  /pdfTextClipPath [ pdfTextClipPath aload pop pdfTextPath aload pop ] def",
+  "  /pdfTextPath [] def",
   "} def",
   "/Tclip2 {",
   "  pdfTextClipPath cvx exec clip newpath",
@@ -1920,7 +1921,7 @@ GBool PSOutputDev::checkIfPageNeedsToBeRasterized(int pg) {
     //~ this could depend on the printing flag, e.g., if an annotation
     //~   uses transparency --> need to pass the printing flag into
     //~   constructor, init, writeDocSetup
-    doc->getCatalog()->getPage(pg)->display(scan, 72, 72, 0,
+    doc->getCatalog()->getPage(pg)->display(scan, NULL, 72, 72, 0,
 					    gTrue, gTrue, gTrue);
     rasterize = scan->usesTransparency() || scan->usesPatternImageMask();
     delete scan;
@@ -1936,7 +1937,7 @@ GBool PSOutputDev::checkIfPageNeedsToBeRasterized(int pg) {
 
 void PSOutputDev::setupResources(Dict *resDict) {
   Object xObjDict, xObjRef, xObj, patDict, patRef, pat;
-  Object gsDict, gsRef, gs, smask, smaskGroup, resObj;
+  Object gsDict, gsRef, gs, smask, smaskGroup, resObj, resRef;
   Ref ref0;
   GBool skip;
   int i;
@@ -1951,7 +1952,7 @@ void PSOutputDev::setupResources(Dict *resDict) {
 
       // check for an already-visited XObject
       skip = gFalse;
-      if ((xObjDict.dictGetValNF(i, &xObjRef)->isRef())) {
+      if (xObjDict.dictGetValNF(i, &xObjRef)->isRef()) {
 	ref0 = xObjRef.getRef();
 	if (ref0.num < 0 || ref0.num >= xref->getNumObjects()) {
 	  skip = gTrue;
@@ -1965,11 +1966,23 @@ void PSOutputDev::setupResources(Dict *resDict) {
 	// process the XObject's resource dictionary
 	xObjDict.dictGetVal(i, &xObj);
 	if (xObj.isStream()) {
-	  xObj.streamGetDict()->lookup("Resources", &resObj);
-	  if (resObj.isDict()) {
-	    setupResources(resObj.getDict());
+	  if (xObj.streamGetDict()->lookupNF("Resources", &resRef)->isRef()) {
+	    ref0 = resRef.getRef();
+	    if (ref0.num < 0 || ref0.num >= xref->getNumObjects()) {
+	      skip = gTrue;
+	    } else {
+	      skip = (GBool)visitedResources[ref0.num];
+	      visitedResources[ref0.num] = 1;
+	    }
 	  }
-	  resObj.free();
+	  if (!skip) {
+	    xObj.streamGetDict()->lookup("Resources", &resObj);
+	    if (resObj.isDict()) {
+	      setupResources(resObj.getDict());
+	    }
+	    resObj.free();
+	  }
+	  resRef.free();
 	}
 	xObj.free();
       }
@@ -1987,7 +2000,7 @@ void PSOutputDev::setupResources(Dict *resDict) {
 
       // check for an already-visited Pattern
       skip = gFalse;
-      if ((patDict.dictGetValNF(i, &patRef)->isRef())) {
+      if (patDict.dictGetValNF(i, &patRef)->isRef()) {
 	ref0 = patRef.getRef();
 	if (ref0.num < 0 || ref0.num >= xref->getNumObjects()) {
 	  skip = gTrue;
@@ -2001,11 +2014,23 @@ void PSOutputDev::setupResources(Dict *resDict) {
 	// process the Pattern's resource dictionary
 	patDict.dictGetVal(i, &pat);
 	if (pat.isStream()) {
-	  pat.streamGetDict()->lookup("Resources", &resObj);
-	  if (resObj.isDict()) {
-	    setupResources(resObj.getDict());
+	  if (pat.streamGetDict()->lookupNF("Resources", &resRef)->isRef()) {
+	    ref0 = resRef.getRef();
+	    if (ref0.num < 0 || ref0.num >= xref->getNumObjects()) {
+	      skip = gTrue;
+	    } else {
+	      skip = (GBool)visitedResources[ref0.num];
+	      visitedResources[ref0.num] = 1;
+	    }
 	  }
-	  resObj.free();
+	  if (!skip) {
+	    pat.streamGetDict()->lookup("Resources", &resObj);
+	    if (resObj.isDict()) {
+	      setupResources(resObj.getDict());
+	    }
+	    resObj.free();
+	  }
+	  resRef.free();
 	}
 	pat.free();
       }
@@ -2024,7 +2049,7 @@ void PSOutputDev::setupResources(Dict *resDict) {
 
       // check for an already-visited ExtGState
       skip = gFalse;
-      if ((gsDict.dictGetValNF(i, &gsRef)->isRef())) {
+      if (gsDict.dictGetValNF(i, &gsRef)->isRef()) {
 	ref0 = gsRef.getRef();
 	if (ref0.num < 0 || ref0.num >= xref->getNumObjects()) {
 	  skip = gTrue;
@@ -2039,11 +2064,24 @@ void PSOutputDev::setupResources(Dict *resDict) {
 	if (gsDict.dictGetVal(i, &gs)->isDict()) {
 	  if (gs.dictLookup("SMask", &smask)->isDict()) {
 	    if (smask.dictLookup("G", &smaskGroup)->isStream()) {
-	      smaskGroup.streamGetDict()->lookup("Resources", &resObj);
-	      if (resObj.isDict()) {
-		setupResources(resObj.getDict());
+	      if (smaskGroup.streamGetDict()->lookupNF("Resources", &resRef)
+		                            ->isRef()) {
+		ref0 = resRef.getRef();
+		if (ref0.num < 0 || ref0.num >= xref->getNumObjects()) {
+		  skip = gTrue;
+		} else {
+		  skip = (GBool)visitedResources[ref0.num];
+		  visitedResources[ref0.num] = 1;
+		}
 	      }
-	      resObj.free();
+	      if (!skip) {
+		smaskGroup.streamGetDict()->lookup("Resources", &resObj);
+		if (resObj.isDict()) {
+		  setupResources(resObj.getDict());
+		}
+		resObj.free();
+	      }
+	      resRef.free();
 	    }
 	    smaskGroup.free();
 	  }
@@ -3246,7 +3284,7 @@ PSFontFileInfo *PSOutputDev::setupType3Font(GfxFont *font,
     box.y1 = m[1];
     box.x2 = m[2];
     box.y2 = m[3];
-    gfx = new Gfx(doc, this, resDict, &box, NULL);
+    gfx = new Gfx(doc, this, NULL, resDict, &box, NULL);
     inType3Char = gTrue;
     for (i = 0; i < charProcs->getLength(); ++i) {
       t3FillColorOnly = gFalse;
@@ -4170,7 +4208,7 @@ void PSOutputDev::setupForm(Object *strRef, Object *strObj) {
   box.y1 = bbox[1];
   box.x2 = bbox[2];
   box.y2 = bbox[3];
-  gfx = new Gfx(doc, this, resDict, &box, &box);
+  gfx = new Gfx(doc, this, NULL, resDict, &box, &box);
   gfx->display(strRef);
   delete gfx;
 
@@ -4201,12 +4239,15 @@ GBool PSOutputDev::checkPageSlice(Page *page, double hDPI, double vDPI,
   Stream *str0, *str;
   Object obj;
   Guchar *p;
-  Guchar col[4];
   char buf[4096];
   double userUnit, hDPI2, vDPI2;
   double m0, m1, m2, m3, m4, m5;
   int nStripes, stripeH, stripeY;
-  int w, h, x, y, comp, i, n;
+  int w, h, x, y, i, n;
+#if SPLASH_CMYK
+  Guchar col[4];
+  int comp;
+#endif
 #endif
 
   pg = page->getNum();
@@ -4240,7 +4281,7 @@ GBool PSOutputDev::checkPageSlice(Page *page, double hDPI, double vDPI,
   } else if (rotateA < 0) {
     rotateA += 360;
   }
-  state = new GfxState(dpi, dpi, &box, rotateA, gFalse);
+  state = new GfxState(NULL, dpi, dpi, &box, rotateA, gFalse);
   startPage(page->getNum(), state);
   delete state;
 
@@ -4301,7 +4342,7 @@ GBool PSOutputDev::checkPageSlice(Page *page, double hDPI, double vDPI,
     m3 = box.y2 - box.y1;
     m4 = box.x1;
     m5 = box.y1;
-    page->displaySlice(splashOut, hDPI2, vDPI2,
+    page->displaySlice(splashOut, NULL, hDPI2, vDPI2,
 		       (360 - page->getRotate()) % 360, useMediaBox, crop,
 		       sliceX, stripeY, sliceW, stripeH,
 		       printing, abortCheckCbk, abortCheckCbkData);
@@ -4626,8 +4667,19 @@ void PSOutputDev::startPage(int pageNum, GfxState *state) {
 	ty += (imgHeight2 - yScale * height) / 2;
       }
     }
-    tx += (rotate == 0 || rotate == 180) ? imgLLX : imgLLY;
-    ty += (rotate == 0 || rotate == 180) ? imgLLY : -imgLLX;
+    if (rotate == 0) {
+      tx += imgLLX;
+      ty += imgLLY;
+    } else if (rotate == 90) {
+      tx += imgLLY;
+      ty -= imgLLX;
+    } else if (rotate == 180) {
+      tx -= imgLLY;
+      ty -= imgLLX;
+    } else { // rotate == 270
+      tx -= imgLLY;
+      ty += imgLLX;
+    }
     if (tx != 0 || ty != 0) {
       writePSFmt("{0:.6g} {1:.6g} translate\n", tx, ty);
     }
@@ -5248,7 +5300,7 @@ void PSOutputDev::tilingPatternFillL1(GfxState *state, Gfx *gfx,
   box.y1 = bbox[1];
   box.x2 = bbox[2];
   box.y2 = bbox[3];
-  gfx2 = new Gfx(doc, this, resDict, &box, NULL);
+  gfx2 = new Gfx(doc, this, NULL, resDict, &box, NULL);
   gfx2->takeContentStreamStack(gfx);
   writePS("/x {\n");
   if (paintType == 2) {
@@ -5315,7 +5367,7 @@ void PSOutputDev::tilingPatternFillL2(GfxState *state, Gfx *gfx,
   box.y1 = bbox[1];
   box.x2 = bbox[2];
   box.y2 = bbox[3];
-  gfx2 = new Gfx(doc, this, resDict, &box, NULL);
+  gfx2 = new Gfx(doc, this, NULL, resDict, &box, NULL);
   gfx2->takeContentStreamStack(gfx);
   t3FillColorOnly = paintType == 2;
   inType3Char = gTrue;

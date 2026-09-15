@@ -395,7 +395,7 @@ XpdfWidget::ErrorCode printPDF(PDFDoc *doc, QPrinter *prt,
       fclose(psFile);
       goto err1;
     }
-    doc->displayPage(psOut, pg, 72, 72, 0,
+    doc->displayPage(psOut, NULL, pg, 72, 72, 0,
 		     !globalParams->getPSUseCropBoxAsPage(),
 		     gTrue, gTrue);
     widget->updatePrintStatus(pg + 1, startPage, endPage);

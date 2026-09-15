@@ -611,8 +611,8 @@ GString *fileNameToUTF8(wchar_t *path) {
 
 GString *fileNameMultiByteToUTF8(char *path) {
   wchar_t fileNameW[winMaxLongPath + 1];
-  if (MultiByteToWideChar(CP_OEMCP, 0, path, -1,
-			   fileNameW, sizeof(fileNameW) / sizeof(wchar_t))) {
+  if (MultiByteToWideChar(CP_ACP, 0, path, -1,
+			  fileNameW, sizeof(fileNameW) / sizeof(wchar_t))) {
     return fileNameToUTF8(fileNameW);
   } else {
     // shouldn't happen, but just in case...

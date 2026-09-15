@@ -1722,12 +1722,9 @@ GBool JBIG2Stream::readSymbolDictSeg(Guint segNum, Guint length,
   while (i < numNewSyms) {
 
     // read the height class delta height
-    if (huff) {
-      huffDecoder->decodeInt(&dh, huffDHTable);
-    } else {
-      arithDecoder->decodeInt(&dh, iadhStats);
-    }
-    if ((dh <= 0 && (Guint)-dh >= symHeight) ||
+    if (!(huff ? huffDecoder->decodeInt(&dh, huffDHTable) :
+	         arithDecoder->decodeInt(&dh, iadhStats)) ||
+	(dh <= 0 && (Guint)-dh >= symHeight) ||
 	(dh > 0 && (Guint)dh > UINT_MAX - symHeight)) {
       error(errSyntaxError, getPos(),
 	    "Bad delta-height value in JBIG2 symbol dictionary");
@@ -2730,7 +2727,18 @@ void JBIG2Stream::readHalftoneRegionSeg(Guint segNum, GBool imm,
     yy = gridY + m * stepX;
     for (n = 0; n < gridW; ++n) {
       if (!(enableSkip && skipBitmap->getPixel(n, m))) {
-	patternBitmap = patternDict->getBitmap(grayImg[i]);
+	Guint gray = grayImg[i];
+	if (gray >= patternDict->getSize()) {
+	  error(errSyntaxError, getPos(),
+		"Invalid gray value in JBIG2 halftone segment");
+	  gfree(grayImg);
+	  if (skipBitmap) {
+	    delete skipBitmap;
+	  }
+	  delete bitmap;
+	  return;
+	}
+	patternBitmap = patternDict->getBitmap(gray);
 	bitmap->combine(patternBitmap, xx >> 8, yy >> 8, combOp);
       }
       xx += stepX;

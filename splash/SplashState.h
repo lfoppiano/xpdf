@@ -103,6 +103,7 @@ private:
   int lineDashLength;
   SplashCoord lineDashPhase;
   SplashStrokeAdjustMode strokeAdjust;
+  GBool alphaIsShape;
   SplashClip *clip;
   GBool clipIsShared;
   SplashBitmap *softMask;

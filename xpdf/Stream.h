@@ -156,7 +156,8 @@ public:
 
 private:
 
-  Stream *makeFilter(char *name, Stream *str, Object *params, int recursion);
+  Stream *makeFilter(char *name, Stream *str, Object *params,
+		     int recursion, GBool *ok);
 };
 
 //------------------------------------------------------------------------

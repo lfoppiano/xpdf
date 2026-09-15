@@ -134,6 +134,7 @@ Stream *Stream::addFilters(Object *dict, int recursion) {
   Object obj, obj2;
   Object params, params2;
   Stream *str;
+  GBool ok;
   int i;
 
   str = this;
@@ -147,20 +148,23 @@ Stream *Stream::addFilters(Object *dict, int recursion) {
     params.free();
     dict->dictLookup("DP", &params, recursion);
   }
+  ok = gTrue;
   if (obj.isName()) {
-    str = makeFilter(obj.getName(), str, &params, recursion);
+    str = makeFilter(obj.getName(), str, &params, recursion, &ok);
   } else if (obj.isArray()) {
-    for (i = 0; i < obj.arrayGetLength(); ++i) {
+    for (i = 0; ok && i < obj.arrayGetLength(); ++i) {
       obj.arrayGet(i, &obj2, recursion);
-      if (params.isArray() && i < params.arrayGetLength())
+      if (params.isArray() && i < params.arrayGetLength()) {
 	params.arrayGet(i, &params2, recursion);
-      else
+      } else {
 	params2.initNull();
+      }
       if (obj2.isName()) {
-	str = makeFilter(obj2.getName(), str, &params2, recursion);
+	str = makeFilter(obj2.getName(), str, &params2, recursion, &ok);
       } else {
 	error(errSyntaxError, getPos(), "Bad filter name");
 	str = new EOFStream(str);
+	ok = gFalse;
       }
       obj2.free();
       params2.free();
@@ -175,7 +179,7 @@ Stream *Stream::addFilters(Object *dict, int recursion) {
 }
 
 Stream *Stream::makeFilter(char *name, Stream *str, Object *params,
-			   int recursion) {
+			   int recursion, GBool *ok) {
   int pred;			// parameters
   int colors;
   int bits;
@@ -314,6 +318,7 @@ Stream *Stream::makeFilter(char *name, Stream *str, Object *params,
   } else {
     error(errSyntaxError, getPos(), "Unknown filter '{0:s}'", name);
     str = new EOFStream(str);
+    *ok = gFalse;
   }
   return str;
 }
@@ -2841,10 +2846,10 @@ int DCTStream::getBlock(char *blk, int size) {
   if (!prepared) {
     prepare();
   }
+  if (y >= height) {
+    return 0;
+  }
   if (progressive || !interleaved) {
-    if (y >= height) {
-      return 0;
-    }
     for (nRead = 0; nRead < size; ++nRead) {
       blk[nRead] = (char)frameBuf[comp][y * bufWidth + x];
       if (++comp == numComps) {
@@ -2942,6 +2947,7 @@ void DCTStream::prepare() {
     if (bufWidth <= 0 || bufWidth > INT_MAX / numComps / mcuHeight) {
       error(errSyntaxError, getPos(), "Invalid image size in DCT stream");
       y = height;
+      rowBuf = rowBufPtr = rowBufEnd = NULL;
       prepared = gTrue;
       return;
     }

@@ -23,7 +23,8 @@
 
 //------------------------------------------------------------------------
 
-static GBool createIndex(char *htmlDir);
+static GBool createBasicIndex(char *htmlDir);
+static GBool createFrameIndex(char *htmlDir);
 
 //------------------------------------------------------------------------
 
@@ -31,6 +32,7 @@ static int firstPage = 1;
 static int lastPage = 0;
 static double zoom = 1;
 static int resolution = 150;
+static GBool noFrame = gFalse;
 static double vStretch = 1;
 static GBool embedBackground = gFalse;
 static GBool noFonts = gFalse;
@@ -58,6 +60,8 @@ static ArgDesc argDesc[] = {
    "initial zoom level (1.0 means 72dpi)"},
   {"-r",                argInt,    &resolution,      0,
    "resolution, in DPI (default is 150)"},
+  {"-noframe",          argFlag,   &noFrame,         0,
+   "generate a basic index page, without an iframe element"},
   {"-vstretch",         argFP,     &vStretch,        0,
    "vertical stretch factor (1.0 means no stretching)"},
   {"-embedbackground",  argFlag,   &embedBackground, 0,
@@ -127,12 +131,15 @@ int main(int argc, char *argv[]) {
   // parse args
   fixCommandLine(&argc, &argv);
   ok = parseArgs(argDesc, &argc, argv);
-  if (!ok || argc != 3 || printVersion || printHelp) {
+  if (printVersion) {
+    printf("pdftohtml version %s [www.xpdfreader.com]\n", xpdfVersion);
+    printf("%s\n", xpdfCopyright);
+    goto err0;
+  }
+  if (!ok || argc != 3 || printHelp) {
     fprintf(stderr, "pdftohtml version %s [www.xpdfreader.com]\n", xpdfVersion);
     fprintf(stderr, "%s\n", xpdfCopyright);
-    if (!printVersion) {
-      printUsage("pdftohtml", "<PDF-file> <html-dir>", argDesc);
-    }
+    printUsage("pdftohtml", "<PDF-file> <html-dir>", argDesc);
     goto err0;
   }
   fileName = argv[1];
@@ -271,7 +278,7 @@ int main(int argc, char *argv[]) {
   }
 
   // create the master index
-  if (!createIndex(htmlDir)) {
+  if (!(noFrame ? createBasicIndex(htmlDir) : createFrameIndex(htmlDir))) {
     exitCode = 2;
     goto err2;
   }
@@ -300,7 +307,7 @@ int main(int argc, char *argv[]) {
 #endif
 }
 
-static GBool createIndex(char *htmlDir) {
+static GBool createBasicIndex(char *htmlDir) {
   GString *htmlFileName;
   FILE *html;
   int pg;
@@ -321,6 +328,94 @@ static GBool createIndex(char *htmlDir) {
   }
   fprintf(html, "</body>\n");
   fprintf(html, "</html>\n");
+
+  fclose(html);
+
+  return gTrue;
+}
+
+static const char *frameHead =
+  "<html>\n"
+  "<head>\n"
+  "<style type=\"text/css\">\n"
+  "body {\n"
+  "  height: 100vh;\n"
+  "  margin: 0;\n"
+  "  border: 0;\n"
+  "}\n"
+  ".container {\n"
+  "  display: flex;\n"
+  "  width: 100%;\n"
+  "  height: 100%;\n"
+  "}\n"
+  ".sidebar {\n"
+  "  width: 5em;\n"
+  "  background-color: #eeeeee;\n"
+  "  padding: 0.5em;\n"
+  "  overflow: auto;\n"
+  "}\n"
+  ".sidebar ul {\n"
+  "  list-style-type: none;\n"
+  "  padding: 0;\n"
+  "  margin: 0;\n"
+  "}\n"
+  ".viewer {\n"
+  "  flex: 1;\n"
+  "  padding: 0;\n"
+  "  overflow: auto;\n"
+  "}\n"
+  ".viewer iframe {\n"
+  "  width: 100%;\n"
+  "  height: 100%;\n"
+  "  border: none;\n"
+  "}\n"
+  "</style>\n"
+  "</head>\n"
+  "<body>\n"
+  "<div class=\"container\">\n"
+  "  <nav class=\"sidebar\">\n"
+  "    <ul>\n";
+
+static const char *frameTail =
+  "  </ul>\n"
+  "  </nav>\n"
+  "  <main class=\"viewer\">\n"
+  "    <iframe id=\"viewerFrame\" src=\"page1.html\"></iframe>\n"
+  "  </main>\n"
+  "</div>\n"
+  "<script>\n"
+  "  const iframe = document.getElementById(\"viewerFrame\");\n"
+  "  document.querySelectorAll('a[page]').forEach(link => {\n"
+  "    link.addEventListener('click', (e) => {\n"
+  "      e.preventDefault();\n"
+  "      const page = link.getAttribute(\"page\");\n"
+  "      iframe.src = page;\n"
+  "    });\n"
+  "  });\n"
+  "</script>\n"
+  "</body>\n"
+  "</html>\n";
+
+static GBool createFrameIndex(char *htmlDir) {
+  GString *htmlFileName;
+  FILE *html;
+  int pg;
+
+  htmlFileName = GString::format("{0:s}/index.html", htmlDir);
+  html = openFile(htmlFileName->getCString(), "w");
+  if (!html) {
+    error(errIO, -1, "Couldn't open HTML file '{0:t}'", htmlFileName);
+    delete htmlFileName;
+    return gFalse;
+  }
+  delete htmlFileName;
+
+  fputs(frameHead, html);
+  for (pg = firstPage; pg <= lastPage; ++pg) {
+    fprintf(html, "      <li><a href=\"#\" page=\"page%d.html\">page %d</a></li>\n",
+	    pg, pg);
+  }
+  fputs(frameTail, html);
 
   fclose(html);
 

@@ -2,7 +2,7 @@
 //
 // XpdfWidget.h
 //
-// Copyright 2009-2024 Glyph & Cog, LLC
+// Copyright 2009-2025 Glyph & Cog, LLC
 //
 //========================================================================
 
@@ -12,7 +12,7 @@
 //! <br><br>
 //! <a href="changes.html">Change history</a>
 //! <br><br>
-//! Copyright 2009-2024 Glyph & Cog, LLC
+//! Copyright 2009-2025 Glyph & Cog, LLC
 
 //! \file
 

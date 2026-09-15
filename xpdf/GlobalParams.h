@@ -304,6 +304,7 @@ public:
   GBool getInitialSidebarState();
   int getInitialSidebarWidth();
   GString *getInitialSelectMode();
+  GBool getInitialMaximized();
   int getMaxTileWidth();
   int getMaxTileHeight();
   int getTileCacheSize();
@@ -326,6 +327,7 @@ public:
   GBool getDrawAnnotations();
   GBool getDrawFormFields();
   GBool getEnableXFA();
+  GBool getPreferXFAFieldValues();
   GBool getOverprintPreview() { return overprintPreview; }
   GString *getPaperColor();
   GString *getMatteColor();
@@ -343,6 +345,7 @@ public:
   GBool getIgnoreWrongSizeToUnicode();
   GBool isDroppedFont(const char *fontName);
   GBool getSeparateRotatedText();
+  GBool getDiscardCoveredText();
   GList *getKeyBinding(int code, int mods, int context);
   GList *getAllKeyBindings();
   int getNumPopupMenuCmds();
@@ -427,6 +430,7 @@ private:
   void setDataDirVar();
   void createDefaultKeyBindings();
   void initStateFilePaths();
+  FILE *openConfigFile(const char *cfgFileName, GString **fileName);
   void parseFile(GString *fileName, FILE *f);
   GList *parseLineTokens(char *buf, GString *fileName, int line);
   void parseNameToUnicode(GList *tokens, GString *fileName, int line);
@@ -568,6 +572,7 @@ private:
 				//   or closed (false)
   int initialSidebarWidth;	// initial sidebar width
   GString *initialSelectMode;	// initial selection mode (block or linear)
+  GBool initialMaximized;	// initial window maximized state
   int maxTileWidth;		// maximum rasterization tile width
   int maxTileHeight;		// maximum rasterization tile height
   int tileCacheSize;		// number of rasterization tiles in cache
@@ -591,6 +596,7 @@ private:
   GBool drawAnnotations;	// draw annotations or not
   GBool drawFormFields;		// draw form fields or not
   GBool enableXFA;		// enable XFA form parsing
+  GBool preferXFAFieldValues;	// prefer XFA field values over AcroForm values
   GBool overprintPreview;	// enable overprint preview
   GString *paperColor;		// paper (page background) color
   GString *matteColor;		// matte (background outside of page) color
@@ -613,6 +619,7 @@ private:
 				   //   (8-bit vs 16-bit) doesn't match the font
   GHash *droppedFonts;		// dropped fonts [int]
   GBool separateRotatedText;	// separate text at each rotation
+  GBool discardCoveredText;	// discard text covered by fill or image
   GList *keyBindings;		// key & mouse button bindings [KeyBinding]
   GList *popupMenuCmds;		// popup menu commands [PopupMenuCmd]
   GString *pagesFile;		// path for the page number save file

@@ -18,6 +18,7 @@ class PDFDoc;
 class XRef;
 class OutputDev;
 class Links;
+class LocalParams;
 
 //------------------------------------------------------------------------
 
@@ -163,14 +164,16 @@ public:
   Object *getThumbnail(Object *obj) { return thumbnail.fetch(xref, obj); }
 
   // Display a page.
-  void display(OutputDev *out, double hDPI, double vDPI,
+  void display(OutputDev *out, LocalParams *localParams,
+	       double hDPI, double vDPI,
 	       int rotate, GBool useMediaBox, GBool crop,
 	       GBool printing,
 	       GBool (*abortCheckCbk)(void *data) = NULL,
 	       void *abortCheckCbkData = NULL);
 
   // Display part of a page.
-  void displaySlice(OutputDev *out, double hDPI, double vDPI,
+  void displaySlice(OutputDev *out, LocalParams *localParams,
+		    double hDPI, double vDPI,
 		    int rotate, GBool useMediaBox, GBool crop,
 		    int sliceX, int sliceY, int sliceW, int sliceH,
 		    GBool printing,

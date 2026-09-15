@@ -324,7 +324,7 @@ Guchar *WebFont::makeUnicodeCmapTable(int *codeToGID, int nCodes,
 	cmapTable[28 + nSegs*6 + i*2    ] = (Guchar)(idRangeOffset >> 8);
 	cmapTable[28 + nSegs*6 + i*2 + 1] = (Guchar)idRangeOffset;
       }
-      if (c == 65534 || !unicodeToGID[c+1]) {
+      if (c == unicodeToGIDLength - 1 || c == 65534 || !unicodeToGID[c+1]) {
 	end = c;
 	cmapTable[26 + i*2    ] = (Guchar)(end >> 8);
 	cmapTable[26 + i*2 + 1] = (Guchar)end;

@@ -530,8 +530,8 @@ void TileCache::rasterizeTile(CachedTileDesc *ct) {
   info.out = out;
   out->setStartPageCallback(&TileCache::startPageCbk, &info);
   out->startDoc(state->getDoc()->getXRef());
-  state->getDoc()->displayPageSlice(out, ct->page, ct->dpi, ct->dpi, ct->rotate,
-				    gFalse, gTrue, gFalse,
+  state->getDoc()->displayPageSlice(out, NULL, ct->page, ct->dpi, ct->dpi,
+				    ct->rotate, gFalse, gTrue, gFalse,
 				    ct->tx, ct->ty, ct->tw, ct->th,
 				    &abortCheckCbk, ct);
   if (ct->state == cachedTileCanceled) {

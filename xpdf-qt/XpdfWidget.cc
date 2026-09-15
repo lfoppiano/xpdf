@@ -1296,7 +1296,7 @@ QImage XpdfWidget::convertPageToImage(int page, double dpi, bool transparent,
       SplashOutputDev *out = new SplashOutputDev(mode, 1, gFalse, paperColor);
       out->setNoComposite(gTrue);
       out->startDoc(doc->getXRef());
-      doc->displayPage(out, page, dpi, dpi, core->getRotate(),
+      doc->displayPage(out, NULL, page, dpi, dpi, core->getRotate(),
 		       gFalse, gTrue, gFalse);
       SplashBitmap *bitmap = out->getBitmap();
       QImage img(bitmap->getWidth(), bitmap->getHeight(), format);
@@ -1316,7 +1316,7 @@ QImage XpdfWidget::convertPageToImage(int page, double dpi, bool transparent,
     } else {
       SplashOutputDev *out = new SplashOutputDev(mode, 4, gFalse, paperColor);
       out->startDoc(doc->getXRef());
-      doc->displayPage(out, page, dpi, dpi, core->getRotate(),
+      doc->displayPage(out, NULL, page, dpi, dpi, core->getRotate(),
 		       gFalse, gTrue, gFalse);
       SplashBitmap *bitmap = out->getBitmap();
       QImage *img = new QImage((const uchar *)bitmap->getDataPtr(),
@@ -1402,7 +1402,7 @@ QImage XpdfWidget::convertRegionToImage(int page, double x0, double y0,
       SplashOutputDev *out = new SplashOutputDev(mode, 1, gFalse, paperColor);
       out->setNoComposite(gTrue);
       out->startDoc(doc->getXRef());
-      doc->displayPageSlice(out, page, dpi, dpi, core->getRotate(),
+      doc->displayPageSlice(out, NULL, page, dpi, dpi, core->getRotate(),
 			    gFalse, gTrue, gFalse,
 			    sliceX, sliceY, sliceW, sliceH);
       SplashBitmap *bitmap = out->getBitmap();
@@ -1423,7 +1423,7 @@ QImage XpdfWidget::convertRegionToImage(int page, double x0, double y0,
     } else {
       SplashOutputDev *out = new SplashOutputDev(mode, 4, gFalse, paperColor);
       out->startDoc(doc->getXRef());
-      doc->displayPageSlice(out, page, dpi, dpi, core->getRotate(),
+      doc->displayPageSlice(out, NULL, page, dpi, dpi, core->getRotate(),
 			    gFalse, gTrue, gFalse,
 			    sliceX, sliceY, sliceW, sliceH);
       SplashBitmap *bitmap = out->getBitmap();

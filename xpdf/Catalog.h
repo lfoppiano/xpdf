@@ -144,7 +144,8 @@ private:
   Object viewerPrefs;		// ViewerPreferences object
   GBool ok;			// true if catalog is valid
 
-  Object *findDestInTree(Object *tree, GString *name, Object *obj);
+  Object *findDestInTree(Object *treeRef, Object *tree, GString *name,
+			 Object *obj, char *touchedObjs);
   GBool readPageTree(Object *catDict);
   int countPageTree(Object *pagesNodeRef, char *touchedObjs);
   void loadPage(int pg);
@@ -163,6 +164,10 @@ private:
 			      char style, int *n);
   GBool scanPageTreeForJavaScript(Object *pageNodeRef, char *touchedObjs);
   GBool scanAAForJavaScript(Object *aaObj);
+  Object *checkDictLookup(Object *dictObj, const char *key,
+			  Object *element, char *touchedObjs);
+  Object *checkArrayGet(Object *arrayObj, int i,
+			Object *element, char *touchedObjs);
 };
 
 #endif

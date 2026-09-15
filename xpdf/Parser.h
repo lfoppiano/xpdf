@@ -14,6 +14,12 @@
 #include "Lexer.h"
 
 //------------------------------------------------------------------------
+
+// Max number of nested objects.  This is used to catch infinite loops
+// in the object structure.
+#define objectRecursionLimit 500
+
+//------------------------------------------------------------------------
 // Parser
 //------------------------------------------------------------------------
 

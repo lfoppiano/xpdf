@@ -123,12 +123,15 @@ int main(int argc, char *argv[]) {
   // parse args
   fixCommandLine(&argc, &argv);
   ok = parseArgs(argDesc, &argc, argv);
-  if (!ok || argc != 2 || printVersion || printHelp) {
+  if (printVersion) {
+    printf("pdfinfo version %s [www.xpdfreader.com]\n", xpdfVersion);
+    printf("%s\n", xpdfCopyright);
+    goto err0;
+  }
+  if (!ok || argc != 2 || printHelp) {
     fprintf(stderr, "pdfinfo version %s [www.xpdfreader.com]\n", xpdfVersion);
     fprintf(stderr, "%s\n", xpdfCopyright);
-    if (!printVersion) {
-      printUsage("pdfinfo", "<PDF-file>", argDesc);
-    }
+    printUsage("pdfinfo", "<PDF-file>", argDesc);
     goto err0;
   }
   fileName = argv[1];

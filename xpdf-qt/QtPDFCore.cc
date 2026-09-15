@@ -71,6 +71,7 @@ QtPDFCore::QtPDFCore(QWidget *viewportA,
 
   dragging = gFalse;
 
+
   panning = gFalse;
 
   inUpdateScrollbars = gFalse;

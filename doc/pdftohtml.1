@@ -1,8 +1,8 @@
-.\" Copyright 1997-2024 Glyph & Cog, LLC
-.TH pdftohtml 1 "08 Feb 2024"
+.\" Copyright 1997-2025 Glyph & Cog, LLC
+.TH pdftohtml 1 "14 Nov 2025"
 .SH NAME
 pdftohtml \- Portable Document Format (PDF) to HTML converter
-(version 4.05)
+(version 4.06)
 .SH SYNOPSIS
 .B pdftohtml
 [options]
@@ -48,6 +48,13 @@ controls the pixel size of the background image files.  The initial
 zoom level is controlled by the \'-z' option.  Specifying a larger
 \'-r' value will allow the viewer to zoom in farther without upscaling
 artifacts in the background.
+.TP
+.B \-noframe
+The default is to generate an \'index.html\' page with a sidebar
+listing all of the pages and a viewing area containing the current
+page in an HTML iframe. This option switches back to the older
+(pre-4.06) behavior of generating a very simple index page that just
+has links to the pages.
 .TP
 .BI \-vstretch " number"
 Specifies a vertical stretch factor.  Setting this to a value greater
@@ -153,7 +160,7 @@ Out of memory.
 99
 Other error.
 .SH AUTHOR
-The pdftohtml software and documentation are copyright 1996-2024 Glyph
+The pdftohtml software and documentation are copyright 1996-2025 Glyph
 & Cog, LLC.
 .SH "SEE ALSO"
 .BR xpdf (1),

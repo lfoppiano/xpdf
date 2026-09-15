@@ -3,7 +3,7 @@ xpdf(1)                     General Commands Manual                    xpdf(1)
 
 
 NAME
-       xpdf - Portable Document Format (PDF) file viewer (version 4.05)
+       xpdf - Portable Document Format (PDF) file viewer (version 4.06)
 
 SYNOPSIS
        xpdf [options] [PDF-file [:page | +dest]] ...
@@ -539,6 +539,10 @@ COMMANDS
        nextTab
               Switch to the next tab.
 
+       normalVideoMode
+              Switch to normal video  mode  (the  opposite  of  reverse  video
+              mode).
+
        open   Open a PDF file in the current tab, using the open dialog.
 
        openErrorWindow
@@ -549,18 +553,18 @@ COMMANDS
 
        openFile2(file,page,dest,passwd,location)
               Open the specified file.  If dest is not empty, go to the speci-
-              fied  named  destination.  Else, if page is not empty, go to the
-              specified page number.  If password is not empty, it is used  as
-              the  PDF password.  If location is "win", open the file in a new
-              window; if it is "tab", open in a new tab;  if  it  is  "check",
-              open  in  the  current  tab,  but only if the specified PDF file
-              isn't already open; else open in the current  tab.   Any/all  of
+              fied named destination.  Else, if page is not empty, go  to  the
+              specified  page number.  If password is not empty, it is used as
+              the PDF password.  If location is "win", open the file in a  new
+              window;  if  it  is  "tab", open in a new tab; if it is "check",
+              open in the current tab, but only  if  the  specified  PDF  file
+              isn't  already  open;  else open in the current tab.  Any/all of
               the arguments, other than file, can be empty strings.  For exam-
               ple:
               openFile2(test.pdf,7,,,tab)
 
        openFileAtDest(file,dest)
-              Open the specified file in the  current  tab  at  the  specified
+              Open  the  specified  file  in  the current tab at the specified
               named destination.
 
        openFileAtDestIn(file,dest,location)
@@ -568,7 +572,7 @@ COMMANDS
               cation must be "win" for a new window or "tab" for a new tab.
 
        openFileAtPage(file,page)
-              Open the specified file in the  current  tab  at  the  specified
+              Open  the  specified  file  in  the current tab at the specified
               page.
 
        openFileAtPageIn(file,page,location)
@@ -576,23 +580,23 @@ COMMANDS
               "win" for a new window or "tab" for a new tab.
 
        openFileIn(file,location)
-              Open the specified file.  Location must be "win" for a new  win-
+              Open  the specified file.  Location must be "win" for a new win-
               dow or "tab" for a new tab.
 
        openIn(location)
-              Open  a PDF file, using the open dialog.  Location must be "win"
+              Open a PDF file, using the open dialog.  Location must be  "win"
               for a new window or "tab" for a new tab.
 
        openSidebar
               Open the sidebar.
 
        openSidebarMoveResizeWin
-              Open the sidebar, resizing the window so that the document  size
+              Open  the sidebar, resizing the window so that the document size
               doesn't change, and moving the window so that the document stays
               in the same place on the screen.
 
        openSidebarResizeWin
-              Open the sidebar, resizing the window so that the document  size
+              Open  the sidebar, resizing the window so that the document size
               doesn't change.
 
        pageDown
@@ -607,7 +611,7 @@ COMMANDS
               Go to the previous page.
 
        prevPageNoScroll
-              Go  to the previous page, with the current relative scroll posi-
+              Go to the previous page, with the current relative scroll  posi-
               tion.
 
        prevTab
@@ -621,6 +625,9 @@ COMMANDS
 
        reload Reload the current PDF file.
 
+       reverseVideoMode
+              Switch to reverse video mode.
+
        rotateCCW
               Rotate the page 90 degrees counterclockwise.
 
@@ -628,7 +635,7 @@ COMMANDS
               Rotate the page 90 degrees clockwise.
 
        run(external-command-string)
-              Run an external command.  The following escapes are  allowed  in
+              Run  an  external command.  The following escapes are allowed in
               the command string:
 
                   %f => PDF file name (or an empty string if no
@@ -648,19 +655,20 @@ COMMANDS
                         (or 0 if there is no selection)
                   %Y => selection lower-right y coordinate
                         (or 0 if there is no selection)
+                  %t => selected text (limited to 500 characters)
                   %i => page containing the mouse pointer
                   %j => x coordinate of the mouse pointer
                   %k => y coordinate of the mouse pointer
                   %% => %
 
-              The  external  command  string will often contain spaces, so the
+              The external command string will often contain  spaces,  so  the
               whole command must be quoted in the xpdfrc file:
 
                   bind x "run(ls -l)"
 
               The command string may not be run through a shell.  It is recom-
-              mended  to keep the command simple, so that it doesn't depend on
-              specific shell functionality.  For complex things, you can  have
+              mended to keep the command simple, so that it doesn't depend  on
+              specific  shell functionality.  For complex things, you can have
               the command string run a shell script.
 
        saveAs Save PDF via a file requester.
@@ -669,13 +677,13 @@ COMMANDS
               Open the 'save image' dialog.
 
        saveSession
-              Save  the  current  session,  consisting of all open windows and
-              tabs, to the session save file.  This file can be  loaded  later
-              with  the loadSession command.  The path for the session file is
+              Save the current session, consisting of  all  open  windows  and
+              tabs,  to  the session save file.  This file can be loaded later
+              with the loadSession command.  The path for the session file  is
               specified with the sessionFile setting (see xpdfrc(5)).
 
        saveTabState
-              Save a list of all tabs open in this window  to  the  tab  state
+              Save  a  list  of  all tabs open in this window to the tab state
               file.  For each tab, this writes the PDF file name and page num-
               ber (on separate lines).  This file can be loaded later with the
               loadTabState command.  The path for the tab state file is speci-
@@ -700,18 +708,18 @@ COMMANDS
               Scroll right by n pixels.
 
        scrollToBottomEdge
-              Scroll to the bottom edge of the last displayed  page,  with  no
+              Scroll  to  the  bottom edge of the last displayed page, with no
               horizontal movement.
 
        scrollToBottomRight
               Scroll to the bottom-right corner of the last displayed page.
 
        scrollToLeftEdge
-              Scroll  to  the  left edge of the current page, with no vertical
+              Scroll to the left edge of the current page,  with  no  vertical
               movement.
 
        scrollToRightEdge
-              Scroll to the right edge of the current page, with  no  vertical
+              Scroll  to  the right edge of the current page, with no vertical
               movement.
 
        scrollToTopEdge
@@ -725,7 +733,7 @@ COMMANDS
               Scroll up by n pixels.
 
        scrollUpPrevPage(n)
-              Scroll up by n pixels, moving to the previous page if  appropri-
+              Scroll  up by n pixels, moving to the previous page if appropri-
               ate.
 
        selectLine
@@ -735,7 +743,7 @@ COMMANDS
               Set the selection to the word at the current mouse position.
 
        setSelection(pg,ulx,uly,lrx,lry)
-              Set  the selection to the specified coordinates on the specified
+              Set the selection to the specified coordinates on the  specified
               page.
 
        showAttachmentsPane
@@ -777,11 +785,11 @@ COMMANDS
               extending as the mouse moves.
 
        startPan
-              Start a pan operation at the current mouse position, which  will
+              Start  a pan operation at the current mouse position, which will
               scroll the document as the mouse moves.
 
        startSelection
-              Start  a  selection at the current mouse position, which will be
+              Start a selection at the current mouse position, which  will  be
               extended as the mouse moves.
 
        toggleContinuousMode
@@ -793,6 +801,9 @@ COMMANDS
        toggleMenuBar
               Toggle the menu bar between shown and hidden.
 
+       toggleReverseVideoMode
+              Toggle between reverse and normal video modes.
+
        toggleSelectMode
               Toggle between block and linear selection mode.
 
@@ -800,19 +811,19 @@ COMMANDS
               Toggle the sidebar between open and closed.
 
        toggleSidebarMoveResizeWin
-              Toggle the sidebar between open and closed, resizing the  window
-              so  that the document size doesn't change, and moving the window
+              Toggle  the sidebar between open and closed, resizing the window
+              so that the document size doesn't change, and moving the  window
               so that the document stays in the same place on the screen.
 
        toggleSidebarResizeWin
-              Toggle the sidebar between open and closed, resizing the  window
+              Toggle  the sidebar between open and closed, resizing the window
               so that the document size doesn't change.
 
        toggleToolbar
               Toggle the toolbar between shown and hidden.
 
        viewPageLabels
-              Show  page  labels  (if the PDF file has them), rather than page
+              Show page labels (if the PDF file has them),  rather  than  page
               numbers.
 
        viewPageNumbers
@@ -839,22 +850,27 @@ COMMANDS
               Zoom to the current selection.
 
 REMOTE SERVER MODE
-       Starting xpdf with the "-remote" switch  puts  it  into  remote  server
-       mode.   All  remaining  command line options are commands (see the COM-
+       Starting  xpdf  with  the  "-remote"  switch puts it into remote server
+       mode.  All remaining command line options are commands  (see  the  COM-
        MANDS section).  Subsequent invocations of "xpdf -remote" with the same
-       remote  server  name will send commands to the already-running instance
-       of xpdf.  The "checkOpenFile" commands are useful here for things  like
+       remote server name will send commands to the  already-running  instance
+       of  xpdf.  The "checkOpenFile" commands are useful here for things like
        changing pages.  For example:
 
                   # Start up xpdf, and open something.pdf.
                   xpdf -remote foo 'openFile(something.pdf)'
 
-                  #  Switch  to  page 7 in the already-open something.pdf.  If
+                  # Switch to page 7 in the  already-open  something.pdf.   If
               the user
-                  # has closed xpdf in the meantime, this will restart it  and
+                  #  has closed xpdf in the meantime, this will restart it and
               reopen
                   # the file.
                   xpdf -remote foo 'checkOpenFileAtPage(something.pdf, 7)'
+
+                  # Pass two commands to the remote instance: (1)  open  some-
+              thing.pdf
+                  # and then (2) raise the xpdf window.
+                  xpdf -remote foo 'openFile(something.pdf)' raise
 
 EXIT CODES
        The Xpdf tools use the following exit codes:
@@ -870,7 +886,7 @@ EXIT CODES
        99     Other error.
 
 AUTHOR
-       The  xpdf  software  and  documentation are copyright 1996-2024 Glyph &
+       The  xpdf  software  and  documentation are copyright 1996-2025 Glyph &
        Cog, LLC.
 
 SEE ALSO
@@ -880,4 +896,4 @@ SEE ALSO
 
 
 
-                                  08 Feb 2024                          xpdf(1)
+                                  14 Nov 2025                          xpdf(1)

@@ -84,7 +84,7 @@ SplashXPath::SplashXPath(SplashPath *path, SplashCoord *matrix,
 			 SplashClip *clip) {
   SplashXPathPoint *pts;
   SplashCoord x0, y0, x1, y1, x2, y2, x3, y3, xsp, ysp, t;
-  int curSubpath, firstSegInSubpath, i;
+  int nSubpaths, curSubpath, firstSegInSubpath, i;
   GBool adjusted;
 
   //--- transform the points
@@ -108,6 +108,7 @@ SplashXPath::SplashXPath(SplashPath *path, SplashCoord *matrix,
   length = size = 0;
 
   x0 = y0 = xsp = ysp = 0; // make gcc happy
+  nSubpaths = 0;
   curSubpath = 0;
   firstSegInSubpath = 0;
   i = 0;
@@ -158,6 +159,7 @@ SplashXPath::SplashXPath(SplashPath *path, SplashCoord *matrix,
 
       // end a subpath
       if (path->flags[i-1] & splashPathLast) {
+	++nSubpaths;
 	if (closeSubpaths &&
 	    (pts[i-1].x != pts[curSubpath].x ||
 	     pts[i-1].y != pts[curSubpath].y)) {
@@ -178,7 +180,7 @@ SplashXPath::SplashXPath(SplashPath *path, SplashCoord *matrix,
   //--- check for a rectangle
   isRect = gFalse;
   rectX0 = rectY0 = rectX1 = rectY1 = 0;
-  if (length == 4) {
+  if (nSubpaths == 1 && length == 4) {
 #if HAVE_STD_SORT
     std::sort(segs, segs + length, SplashXPathSeg::cmpY);
 #else
@@ -237,15 +239,13 @@ GBool SplashXPath::strokeAdjust(SplashXPathPoint *pts,
 
   adjusted = gFalse;
 
-  // With CAD-mode stroke adjustment, and a simple rectangular clip
-  // region, stroke-adjusted edges that fall slightly outside the clip
-  // region are adjusted back inside the clip region.  This avoids
-  // problems with narrow lines in slightly mismatched clip
-  // rectangles, which appear to be generated somewhat commonly by
-  // buggy CAD software.  (Note: [clip] is NULL when called to build a
-  // clip path.)
-  GBool clipTweak = clip && clip->getIsSimple() &&
-                    strokeAdjMode == splashStrokeAdjustCAD;
+  // If there is a simple rectangular clip region, stroke-adjusted
+  // edges that fall slightly outside the clip region are adjusted
+  // back inside the clip region. This avoids problems with narrow
+  // lines in slightly mismatched clip rectangles, which appear to be
+  // generated somewhat commonly by buggy CAD software. (Note: [clip]
+  // is NULL when called to build a clip path.)
+  GBool clipTweak = clip && clip->getIsSimple();
   SplashCoord cx0 = 0, cx1 = 0, cy0 = 0, cy1 = 0;
   int cxi0 = 0, cxi1 = 0, cyi0 = 0, cyi1 = 0;
   if (clipTweak) {

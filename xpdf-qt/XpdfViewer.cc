@@ -83,8 +83,8 @@ static const char *aboutHTML =
   "<br>"
   "XpdfReader uses the following open source libraries:"
   "<ul>"
-  "<li>FreeType is copyright 2006-2023 David Turner, Robert Wilhelm, and Werner Lemberg.  FreeType is used here under the terms of the FreeType Project License."
-  "<li>The Qt Toolkit is Copyright 2015 The Qt Company Ltd.  Qt is used here under the terms of the LGPL v2.1."
+  "<li>FreeType is copyright 2006-2025 David Turner, Robert Wilhelm, and Werner Lemberg.  FreeType is used here under the terms of the FreeType Project License."
+  "<li>The Qt Toolkit is Copyright 2025 The Qt Company Ltd.  Qt is used here under the terms of the LGPL v2.1."
   "</ul>";
 
 const char *helpURL = "http://www.xpdfreader.com/help";
@@ -157,6 +157,7 @@ XpdfViewerCmd XpdfViewer::cmdTab[] = {
   { "nextPage",                0, gTrue,  gFalse, &XpdfViewer::cmdNextPage },
   { "nextPageNoScroll",        0, gTrue,  gFalse, &XpdfViewer::cmdNextPageNoScroll },
   { "nextTab",                 0, gFalse, gFalse, &XpdfViewer::cmdNextTab },
+  { "normalVideoMode",         0, gFalse, gFalse, &XpdfViewer::cmdNormalVideoMode },
   { "open",                    0, gFalse, gFalse, &XpdfViewer::cmdOpen },
   { "openErrorWindow",         0, gFalse, gFalse, &XpdfViewer::cmdOpenErrorWindow },
   { "openFile",                1, gFalse, gFalse, &XpdfViewer::cmdOpenFile },
@@ -183,6 +184,7 @@ XpdfViewerCmd XpdfViewer::cmdTab[] = {
   { "raise",                   0, gFalse, gFalse, &XpdfViewer::cmdRaise },
 //~   { "redraw",                  0, gTrue,  gFalse, &XpdfViewer::cmdRedraw },
   { "reload",                  0, gTrue,  gFalse, &XpdfViewer::cmdReload },
+  { "reverseVideoMode",        0, gFalse, gFalse, &XpdfViewer::cmdReverseVideoMode },
   { "rotateCCW",               0, gTrue,  gFalse, &XpdfViewer::cmdRotateCCW },
   { "rotateCW",                0, gTrue,  gFalse, &XpdfViewer::cmdRotateCW },
   { "run",                     1, gFalse, gFalse, &XpdfViewer::cmdRun },
@@ -224,6 +226,7 @@ XpdfViewerCmd XpdfViewer::cmdTab[] = {
   { "toggleContinuousMode",    0, gFalse, gFalse, &XpdfViewer::cmdToggleContinuousMode },
   { "toggleFullScreenMode",    0, gFalse, gFalse, &XpdfViewer::cmdToggleFullScreenMode },
   { "toggleMenuBar",           0, gFalse, gFalse, &XpdfViewer::cmdToggleMenuBar },
+  { "toggleReverseVideoMode",  0, gFalse, gFalse, &XpdfViewer::cmdToggleReverseVideoMode },
   { "toggleSelectMode",        0, gFalse, gFalse, &XpdfViewer::cmdToggleSelectMode },
   { "toggleSidebar",           0, gFalse, gFalse, &XpdfViewer::cmdToggleSidebar },
   { "toggleSidebarMoveResizeWin",  0, gFalse, gFalse, &XpdfViewer::cmdToggleSidebarMoveResizeWin },
@@ -819,6 +822,7 @@ public:
 XpdfViewer::XpdfViewer(XpdfApp *appA, GBool fullScreen) {
   setAttribute(Qt::WA_DeleteOnClose, true);
   app = appA;
+  reverseVideo = (bool)app->getReverseVideo();
   createWindow();
   if (fullScreen) {
     move(0, 0);
@@ -1107,6 +1111,14 @@ void XpdfViewer::loadSession(FILE *in, int format) {
 GBool XpdfViewer::isEmpty() {
   return tabInfo->getLength() == 1 &&
          ((XpdfTabInfo *)tabInfo->get(0))->pdf->getFileName().isEmpty();
+}
+
+void XpdfViewer::gotoPage(int page) {
+  currentTab->pdf->gotoPage(page);
+}
+
+void XpdfViewer::gotoNamedDestination(QString destName) {
+  currentTab->pdf->gotoNamedDestination(destName);
 }
 
 //------------------------------------------------------------------------
@@ -1715,6 +1727,17 @@ void XpdfViewer::cmdNextTab(GString *args[], int nArgs, QInputEvent *event) {
   }
 }
 
+void XpdfViewer::cmdNormalVideoMode(GString *args[], int nArgs,
+				    QInputEvent *event) {
+  if (reverseVideo) {
+    reverseVideo = false;
+    for (int i = 0; i < tabInfo->getLength(); ++i) {
+      ((XpdfTabInfo *)tabInfo->get(i))->pdf->setReverseVideo(reverseVideo);
+    }
+    reverseVideoMenuItem->setChecked(reverseVideo);
+  }
+}
+
 void XpdfViewer::cmdOpen(GString *args[], int nArgs,
 			 QInputEvent *event) {
   QString startFile, fileName;
@@ -1952,6 +1975,17 @@ void XpdfViewer::cmdReload(GString *args[], int nArgs, QInputEvent *event) {
   }
 }
 
+void XpdfViewer::cmdReverseVideoMode(GString *args[], int nArgs,
+				     QInputEvent *event) {
+  if (!reverseVideo) {
+    reverseVideo = true;
+    for (int i = 0; i < tabInfo->getLength(); ++i) {
+      ((XpdfTabInfo *)tabInfo->get(i))->pdf->setReverseVideo(reverseVideo);
+    }
+    reverseVideoMenuItem->setChecked(reverseVideo);
+  }
+}
+
 void XpdfViewer::cmdRotateCW(GString *args[], int nArgs, QInputEvent *event) {
   currentTab->pdf->setRotate((currentTab->pdf->getRotate() + 90) % 360);
 }
@@ -2038,6 +2072,11 @@ void XpdfViewer::cmdRun(GString *args[], int nArgs, QInputEvent *event) {
 		     (c1 == 'x') ? selURX :
 		     (c1 == 'y') ? selURY :
 		     (c1 == 'X') ? selLRX : selLRY);
+	break;
+      case 't':
+	s = currentTab->pdf->getSelectedText().left(500);
+	s.replace('\n', ' ').replace('\r', ' ');
+	cmd->append(s.toLocal8Bit().constData());
 	break;
       case 'i':
       case 'j':
@@ -2383,6 +2422,15 @@ void XpdfViewer::cmdToggleMenuBar(GString *args[], int nArgs,
   } else {
     cmdShowMenuBar(args, nArgs, event);
   }
+}
+
+void XpdfViewer::cmdToggleReverseVideoMode(GString *args[], int nArgs,
+					   QInputEvent *event) {
+  reverseVideo = !reverseVideo;
+  for (int i = 0; i < tabInfo->getLength(); ++i) {
+    ((XpdfTabInfo *)tabInfo->get(i))->pdf->setReverseVideo(reverseVideo);
+  }
+  reverseVideoMenuItem->setChecked(reverseVideo);
 }
 
 void XpdfViewer::cmdToggleSelectMode(GString *args[], int nArgs,
@@ -2981,6 +3029,10 @@ void XpdfViewer::openInNewWinMenuAction() {
   execCmd("openIn(win)", NULL);
 }
 
+void XpdfViewer::closeMenuAction() {
+  execCmd("closeTabOrQuit", NULL);
+}
+
 void XpdfViewer::reloadMenuAction() {
   execCmd("reload", NULL);
 }
@@ -3033,6 +3085,10 @@ void XpdfViewer::horizontalContinuousModeMenuAction() {
 
 void XpdfViewer::fullScreenMenuAction(bool checked) {
   execCmd(checked ? "fullScreenMode" : "windowMode", NULL); 
+}
+
+void XpdfViewer::reverseVideoMenuAction(bool checked) {
+  execCmd(checked ? "reverseVideoMode" : "normalVideoMode", NULL); 
 }
 
 void XpdfViewer::rotateClockwiseMenuAction() {
@@ -3328,6 +3384,10 @@ void XpdfViewer::createWindow() {
   // it will be updated by open/close/toggleSidebar
   sidebarWidth = 200;
 
+  if (globalParams->getInitialMaximized()) {
+    setWindowState(windowState() | Qt::WindowMaximized);
+  }
+
   linkTargetBar = new QLabel(this);
   linkTargetBar->setStyleSheet("padding:2px; background:#00ffff;");
   linkTargetBar->setAttribute(Qt::WA_TransparentForMouseEvents, true);
@@ -3558,6 +3618,7 @@ void XpdfViewer::createMainMenu() {
   fileSubmenu->addAction("&Open...", this, SLOT(openMenuAction()));
   fileSubmenu->addAction("Open in new window...",
 			 this, SLOT(openInNewWinMenuAction()));
+  fileSubmenu->addAction("Close tab", this, SLOT(closeMenuAction()));
   fileSubmenu->addAction("Reload", this, SLOT(reloadMenuAction()));
   fileSubmenu->addAction("&Save as...", this, SLOT(saveAsMenuAction()));
   fileSubmenu->addAction("Load last session",
@@ -3624,6 +3685,11 @@ void XpdfViewer::createMainMenu() {
   fullScreenMenuItem = viewSubmenu->addAction("Full screen", this,
 					      SLOT(fullScreenMenuAction(bool)));
   fullScreenMenuItem->setCheckable(true);
+  reverseVideoMenuItem =
+      viewSubmenu->addAction("Reverse video", this,
+			     SLOT(reverseVideoMenuAction(bool)));
+  reverseVideoMenuItem->setCheckable(true);
+  reverseVideoMenuItem->setChecked(reverseVideo);
   viewSubmenu->addSeparator();
   viewSubmenu->addAction("Rotate clockwise",
 			 this, SLOT(rotateClockwiseMenuAction()));
@@ -3695,6 +3761,8 @@ QWidget *XpdfViewer::createTabPane() {
 
   tabList = new QListWidget();
   tabList->setSelectionMode(QAbstractItemView::SingleSelection);
+  tabList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  tabList->setTextElideMode(Qt::ElideNone);
   tabList->setDragEnabled(true);
   tabList->setDragDropMode(QAbstractItemView::InternalMove);
   tabList->viewport()->setAcceptDrops(true);
@@ -3708,7 +3776,7 @@ QWidget *XpdfViewer::createTabPane() {
 				   const QModelIndex&, int)));
   tabPaneLayout->addWidget(tabList);
 
-  QPushButton *newTabBtn = new QPushButton("+ tab");
+  QPushButton *newTabBtn = new QPushButton("+ new tab");
   connect(newTabBtn, SIGNAL(clicked()), this, SLOT(newTabButtonPressed()));
   tabPaneLayout->addWidget(newTabBtn);
 
@@ -3819,7 +3887,7 @@ void XpdfViewer::addTab() {
   GString *initialSelectMode;
 
   pdf = new XpdfWidget(NULL, app->getPaperColor(), app->getMatteColor(),
-		       app->getReverseVideo());
+		       reverseVideo);
   pdf->setSelectionColor(app->getSelectionColor());
   pdf->enableHyperlinks(false);
   pdf->setKeyPassthrough(true);
@@ -4029,18 +4097,8 @@ void XpdfViewer::updateSelectModeInfo() {
 //   - a tab switch happens
 // It updates all visible info related to the document.
 void XpdfViewer::updateDocInfo() {
-  //--- window title
-  QString windowTitle;
-  if (currentTab->pdf->hasOpenDocument()) {
-    windowTitle = currentTab->pdf->getFileName();
-    windowTitle += " - XpdfReader";
-  } else {
-    windowTitle = "XpdfReader";
-  }
-  setWindowTitle(windowTitle);
-
-  //--- tab title
-  QString tabTitle;
+  //--- window and tab titles
+  QString windowTitle, tabTitle;
   if (currentTab->pdf->hasOpenDocument()) {
     tabTitle = currentTab->pdf->getFileName();
     int i = (int)tabTitle.lastIndexOf('/');
@@ -4053,9 +4111,12 @@ void XpdfViewer::updateDocInfo() {
     if (i >= 0) {
       tabTitle = tabTitle.mid(i + 1) + " [" + tabTitle.left(i + 1) + "]";
     }
+    windowTitle = tabTitle + " - XpdfReader";
   } else {
     tabTitle = "(empty)";
+    windowTitle = "XpdfReader";
   }
+  setWindowTitle(windowTitle);
   currentTab->listItem->setText(tabTitle);
   currentTab->listItem->setToolTip(tabTitle);
 

@@ -93,12 +93,15 @@ XpdfApp::XpdfApp(int &argc, char **argv):
   setApplicationVersion(xpdfVersion);
 
   ok = parseArgs(argDesc, &argc, argv);
-  if (!ok || printVersionArg || printHelpArg) {
+  if (printVersionArg) {
+    printf("xpdf version %s [www.xpdfreader.com]\n", xpdfVersion);
+    printf("%s\n", xpdfCopyright);
+    ::exit(99);
+  }
+  if (!ok || printHelpArg) {
     fprintf(stderr, "xpdf version %s [www.xpdfreader.com]\n", xpdfVersion);
     fprintf(stderr, "%s\n", xpdfCopyright);
-    if (!printVersionArg) {
-      printUsage("xpdf", "[<PDF-file> [:<page> | +<dest>]] ...", argDesc);
-    }
+    printUsage("xpdf", "[<PDF-file> [:<page> | +<dest>]] ...", argDesc);
     ::exit(99);
   }
 
@@ -356,7 +359,7 @@ GBool XpdfApp::openInNewWindow(QString fileName, int page, QString dest,
 			       const char *remoteServerName) {
   XpdfViewer *viewer;
 
-  viewer = XpdfViewer::create(this, fileName, page, dest, rotate,
+  viewer = XpdfViewer::create(this, fileName, 1, "", rotate,
 			      password, fullScreen);
   if (!viewer) {
     return gFalse;
@@ -367,6 +370,18 @@ GBool XpdfApp::openInNewWindow(QString fileName, int page, QString dest,
   }
   viewer->tweakSize();
   viewer->show();
+
+  // NB: do this after calling show() to avoid weird glitches if show
+  // resizes the new window
+  if (!dest.isEmpty()) {
+    viewer->gotoNamedDestination(dest);
+  } else {
+    if (page < 0) {
+      page = getSavedPageNumber(fileName);
+    }
+    viewer->gotoPage(page);
+  }
+
   return gTrue;
 }
 

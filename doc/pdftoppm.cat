@@ -4,7 +4,7 @@ pdftoppm(1)                 General Commands Manual                pdftoppm(1)
 
 NAME
        pdftoppm - Portable Document Format (PDF) to Portable Pixmap (PPM) con-
-       verter (version 4.05)
+       verter (version 4.06)
 
 SYNOPSIS
        pdftoppm [options] PDF-file PPM-root
@@ -99,7 +99,7 @@ EXIT CODES
        99     Other error.
 
 AUTHOR
-       The pdftoppm software and documentation are copyright 1996-2024 Glyph &
+       The pdftoppm software and documentation are copyright 1996-2025 Glyph &
        Cog, LLC.
 
 SEE ALSO
@@ -109,4 +109,4 @@ SEE ALSO
 
 
 
-                                  08 Feb 2024                      pdftoppm(1)
+                                  14 Nov 2025                      pdftoppm(1)

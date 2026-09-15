@@ -65,6 +65,11 @@
 #cmakedefine HIGHLIGHTED_REGIONS
 
 /*
+ * Enable support for XDG config/state file paths.
+ */
+#cmakedefine01 USE_XDG
+
+/*
  * Full path for the system-wide xpdfrc file.
  */
 #cmakedefine SYSTEM_XPDFRC "@SYSTEM_XPDFRC@"

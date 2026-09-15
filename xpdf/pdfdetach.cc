@@ -87,12 +87,15 @@ int main(int argc, char *argv[]) {
       (saveAll ? 1 : 0) != 1) {
     ok = gFalse;
   }
-  if (!ok || argc != 2 || printVersion || printHelp) {
+  if (printVersion) {
+    printf("pdfdetach version %s [www.xpdfreader.com]\n", xpdfVersion);
+    printf("%s\n", xpdfCopyright);
+    goto err0;
+  }
+  if (!ok || argc != 2 || printHelp) {
     fprintf(stderr, "pdfdetach version %s [www.xpdfreader.com]\n", xpdfVersion);
     fprintf(stderr, "%s\n", xpdfCopyright);
-    if (!printVersion) {
-      printUsage("pdfdetach", "<PDF-file>", argDesc);
-    }
+    printUsage("pdfdetach", "<PDF-file>", argDesc);
     goto err0;
   }
   fileName = argv[1];

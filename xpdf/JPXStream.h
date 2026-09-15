@@ -291,6 +291,7 @@ public:
   virtual void getImageParams(int *bitsPerComponent,
 			      StreamColorSpaceMode *csMode);
   void reduceResolution(int reductionA) { reduction = reductionA; }
+  Stream *getRawStream() { return str; }
 
 private:
 

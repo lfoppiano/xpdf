@@ -169,7 +169,7 @@ private:
   GFileOffset getStartXref();
   GBool readXRef(GFileOffset *pos, XRefPosSet *posSet, GBool hybrid);
   GBool readXRefTable(GFileOffset *pos, int offset, XRefPosSet *posSet);
-  GBool readXRefStream(Stream *xrefStr, GFileOffset *pos, GBool hybrid);
+  GBool readXRefStream(Stream *xrefStr, GFileOffset *pos);
   GBool readXRefStreamSection(Stream *xrefStr, int *w, int first, int n);
   GBool constructXRef();
   void constructTrailerDict(GFileOffset pos);

@@ -215,6 +215,11 @@ public:
   // converting text to Unicode.
   virtual GBool problematicForUnicode() = 0;
 
+  // Returns true if this font swaps the left and right parens in its
+  // ToUnicode map. This is likely a kludge used by bad PDF generators
+  // with Arabic fonts.
+  virtual GBool parensAreSwapped(XRef *xref) = 0;
+
 protected:
 
   static GfxFontType getFontType(XRef *xref, Dict *fontDict, Ref *embID);
@@ -295,6 +300,8 @@ public:
 
   virtual GBool problematicForUnicode();
 
+  virtual GBool parensAreSwapped(XRef *xref);
+
 private:
 
   Base14FontMapEntry *base14;	// for Base-14 fonts only; NULL otherwise
@@ -355,6 +362,8 @@ public:
   GBool usesIdentityEncoding() { return identityEnc; }
 
   virtual GBool problematicForUnicode();
+
+  virtual GBool parensAreSwapped(XRef *xref);
 
 private:
 

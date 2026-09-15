@@ -24,42 +24,43 @@
 // fill.
 #define patchColorDelta (dblToCol(1 / 256.0))
 
-SplashBitmap *ShadingImage::generateBitmap(GfxState *state,
-					   GfxShading *shading,
-					   SplashColorMode mode,
-					   GBool reverseVideo,
-					   Splash *parentSplash,
-					   SplashBitmap *parentBitmap,
-					   int *xOut, int *yOut) {
+SplashBitmap *ShadingImage::generateBitmap(
+				GfxState *state,
+				GfxShading *shading,
+				SplashColorMode mode,
+				GBool reverseVideo,
+				Splash *parentSplash,
+				SplashBitmapMemCache *bitmapMemCache,
+				int *xOut, int *yOut) {
   switch (shading->getType()) {
   case 1:
     return generateFunctionBitmap(state, (GfxFunctionShading *)shading,
 				  mode, reverseVideo,
-				  parentSplash, parentBitmap, xOut, yOut);
+				  parentSplash, bitmapMemCache, xOut, yOut);
     break;
   case 2:
     return generateAxialBitmap(state, (GfxAxialShading *)shading,
 			       mode, reverseVideo,
-			       parentSplash, parentBitmap, xOut, yOut);
+			       parentSplash, bitmapMemCache, xOut, yOut);
     break;
   case 3:
     return generateRadialBitmap(state, (GfxRadialShading *)shading,
 				mode, reverseVideo,
-				parentSplash, parentBitmap, xOut, yOut);
+				parentSplash, bitmapMemCache, xOut, yOut);
     break;
   case 4:
   case 5:
     return generateGouraudTriangleBitmap(state,
 					 (GfxGouraudTriangleShading *)shading,
 					 mode, reverseVideo,
-					 parentSplash, parentBitmap,
+					 parentSplash, bitmapMemCache,
 					 xOut, yOut);
     break;
   case 6:
   case 7:
     return generatePatchMeshBitmap(state, (GfxPatchMeshShading *)shading,
 				   mode, reverseVideo,
-				   parentSplash, parentBitmap, xOut, yOut);
+				   parentSplash, bitmapMemCache, xOut, yOut);
     break;
   default:
     return NULL;
@@ -74,13 +75,14 @@ static double max4(double x0, double x1, double x2, double x3) {
   return t;
 }
 
-SplashBitmap *ShadingImage::generateFunctionBitmap(GfxState *state,
-						   GfxFunctionShading *shading,
-						   SplashColorMode mode,
-						   GBool reverseVideo,
-						   Splash *parentSplash,
-						   SplashBitmap *parentBitmap,
-						   int *xOut, int *yOut) {
+SplashBitmap *ShadingImage::generateFunctionBitmap(
+				GfxState *state,
+				GfxFunctionShading *shading,
+				SplashColorMode mode,
+				GBool reverseVideo,
+				Splash *parentSplash,
+				SplashBitmapMemCache *bitmapMemCache,
+				int *xOut, int *yOut) {
   // get the shading parameters
   double x0, y0, x1, y1;
   shading->getDomain(&x0, &y0, &x1, &y1);
@@ -104,7 +106,7 @@ SplashBitmap *ShadingImage::generateFunctionBitmap(GfxState *state,
   // allocate the bitmap
   traceMessage("function shading fill bitmap");
   SplashBitmap *bitmap = new SplashBitmap(bitmapWidth, bitmapHeight, 1, mode,
-					  gTrue, gTrue, parentBitmap);
+					  gTrue, gTrue, bitmapMemCache);
   int nComps = splashColorModeNComps[mode];
 
   // compute the domain -> device space transform = mat * CTM
@@ -165,13 +167,14 @@ SplashBitmap *ShadingImage::generateFunctionBitmap(GfxState *state,
   return bitmap;
 }
 
-SplashBitmap *ShadingImage::generateAxialBitmap(GfxState *state,
-						GfxAxialShading *shading,
-						SplashColorMode mode,
-						GBool reverseVideo,
-						Splash *parentSplash,
-						SplashBitmap *parentBitmap,
-						int *xOut, int *yOut) {
+SplashBitmap *ShadingImage::generateAxialBitmap(
+				GfxState *state,
+				GfxAxialShading *shading,
+				SplashColorMode mode,
+				GBool reverseVideo,
+				Splash *parentSplash,
+				SplashBitmapMemCache *bitmapMemCache,
+				int *xOut, int *yOut) {
   // get the shading parameters
   double x0, y0, x1, y1;
   shading->getCoords(&x0, &y0, &x1, &y1);
@@ -229,7 +232,7 @@ SplashBitmap *ShadingImage::generateAxialBitmap(GfxState *state,
   // allocate the bitmap
   traceMessage("axial shading fill bitmap");
   SplashBitmap *bitmap = new SplashBitmap(bitmapWidth, bitmapHeight, 1, mode,
-					  gTrue, gTrue, parentBitmap);
+					  gTrue, gTrue, bitmapMemCache);
   int nComps = splashColorModeNComps[mode];
 
   // special case: zero-length axis
@@ -409,13 +412,14 @@ SplashBitmap *ShadingImage::generateAxialBitmap(GfxState *state,
   return bitmap;
 }
 
-SplashBitmap *ShadingImage::generateRadialBitmap(GfxState *state,
-						 GfxRadialShading *shading,
-						 SplashColorMode mode,
-						 GBool reverseVideo,
-						 Splash *parentSplash,
-						 SplashBitmap *parentBitmap,
-						 int *xOut, int *yOut) {
+SplashBitmap *ShadingImage::generateRadialBitmap(
+				GfxState *state,
+				GfxRadialShading *shading,
+				SplashColorMode mode,
+				GBool reverseVideo,
+				Splash *parentSplash,
+				SplashBitmapMemCache *bitmapMemCache,
+				int *xOut, int *yOut) {
   // get the shading parameters
   double x0, y0, r0, x1, y1, r1;
   shading->getCoords(&x0, &y0, &r0, &x1, &y1, &r1);
@@ -489,7 +493,7 @@ SplashBitmap *ShadingImage::generateRadialBitmap(GfxState *state,
   // allocate the bitmap
   traceMessage("radial shading fill bitmap");
   SplashBitmap *bitmap = new SplashBitmap(bitmapWidth, bitmapHeight, 1, mode,
-					  gTrue, gTrue, parentBitmap);
+					  gTrue, gTrue, bitmapMemCache);
   int nComps = splashColorModeNComps[mode];
 
   // pre-compute colors along the axis
@@ -692,7 +696,7 @@ SplashBitmap *ShadingImage::generateGouraudTriangleBitmap(
 					SplashColorMode mode,
 					GBool reverseVideo,
 					Splash *parentSplash,
-					SplashBitmap *parentBitmap,
+					SplashBitmapMemCache *bitmapMemCache,
 					int *xOut, int *yOut) {
   // get the clip bbox
   double fxMin, fyMin, fxMax, fyMax;
@@ -767,7 +771,7 @@ SplashBitmap *ShadingImage::generateGouraudTriangleBitmap(
   // allocate the bitmap
   traceMessage("Gouraud triangle shading fill bitmap");
   SplashBitmap *bitmap = new SplashBitmap(bitmapWidth, bitmapHeight, 1, mode,
-					  gTrue, gTrue, parentBitmap);
+					  gTrue, gTrue, bitmapMemCache);
 
   // clear the bitmap
   memset(bitmap->getDataPtr(), 0, bitmap->getHeight() * bitmap->getRowSize());
@@ -932,7 +936,7 @@ SplashBitmap *ShadingImage::generatePatchMeshBitmap(
 					SplashColorMode mode,
 					GBool reverseVideo,
 					Splash *parentSplash,
-					SplashBitmap *parentBitmap,
+					SplashBitmapMemCache *bitmapMemCache,
 					int *xOut, int *yOut) {
   // get the clip bbox
   double fxMin, fyMin, fxMax, fyMax;
@@ -1007,7 +1011,7 @@ SplashBitmap *ShadingImage::generatePatchMeshBitmap(
   // allocate the bitmap
   traceMessage("Gouraud triangle shading fill bitmap");
   SplashBitmap *bitmap = new SplashBitmap(bitmapWidth, bitmapHeight, 1, mode,
-					  gTrue, gTrue, parentBitmap);
+					  gTrue, gTrue, bitmapMemCache);
 
   // allocate a Splash object
   // vector antialiasing is disabled to avoid artifacts along triangle edges

@@ -26,7 +26,7 @@
 //------------------------------------------------------------------------
 
 struct SplashFontCacheTag {
-  int c;
+  Guint c;
   short xFrac, yFrac;		// x and y fractions
   int mru;			// valid bit (0x80000000) and MRU index
   int x, y, w, h;		// offset and size of glyph
@@ -103,7 +103,7 @@ SplashFont::~SplashFont() {
   }
 }
 
-GBool SplashFont::getGlyph(int c, int xFrac, int yFrac,
+GBool SplashFont::getGlyph(Guint c, int xFrac, int yFrac,
 			   SplashGlyphBitmap *bitmap) {
   SplashGlyphBitmap bitmap2;
   int size;

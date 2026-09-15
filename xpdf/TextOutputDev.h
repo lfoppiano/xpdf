@@ -19,6 +19,7 @@
 class GList;
 class UnicodeMap;
 class UnicodeRemapping;
+class PDFDoc;
 
 class TextBlock;
 class TextChar;
@@ -86,6 +87,7 @@ public:
          marginRight,		//   discarded
          marginTop,
          marginBottom;
+  GBool cmykColors;		// false for RGB, true for CMYK
 };
 
 //------------------------------------------------------------------------
@@ -121,6 +123,8 @@ public:
   double getAscent() { return ascent; }
   double getDescent() { return descent; }
 
+  GBool isProblematic() { return problematic; }
+
   Ref getFontID() { return fontID; }
 
 private:
@@ -130,6 +134,7 @@ private:
   int flags;
   double mWidth;
   double ascent, descent;
+  GBool problematic;
 
   friend class TextLine;
   friend class TextPage;
@@ -157,6 +162,8 @@ public:
   GString *getFontName() { return font->fontName; }
   void getColor(double *r, double *g, double *b)
     { *r = colorR; *g = colorG; *b = colorB; }
+  void getCMYKColor(double *c, double *m, double *y, double *k)
+    { *c = colorR; *m = colorG; *y = colorB; *k = colorK; }
   GBool isInvisible() { return invisible; }
   void getBBox(double *xMinA, double *yMinA, double *xMaxA, double *yMaxA)
     { *xMinA = xMin; *yMinA = yMin; *xMaxA = xMax; *yMaxA = yMax; }
@@ -172,6 +179,7 @@ public:
   double getBaseline();
   GBool isUnderlined() { return underlined; }
   GString *getLinkURI();
+  int getLinkPage(PDFDoc *doc);
 
 private:
 
@@ -191,9 +199,10 @@ private:
   TextFontInfo *font;		// font information
   double fontSize;		// font size
   TextLink *link;
-  double colorR,		// word color
+  double colorR,		// word color (RGB or CMYK)
          colorG,
-         colorB;
+         colorB,
+         colorK;
   GBool invisible;		// set for invisible text (render mode 3)
 
   // group the byte-size fields to minimize object size
@@ -808,6 +817,7 @@ public:
 private:
 
   void generateBOM();
+  void handleCoveredText();
 
   TextOutputFunc outputFunc;	// output function
   void *outputStream;		// output stream

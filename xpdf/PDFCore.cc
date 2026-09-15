@@ -1545,7 +1545,7 @@ GBool PDFCore::findU(Unicode *u, int len, GBool caseSensitive,
     for (pg = backward ? pg - 1 : pg + 1;
 	 backward ? pg >= 1 : pg <= doc->getNumPages();
 	 pg += backward ? -1 : 1) {
-      doc->displayPage(textOut, pg, 72, 72, 0, gFalse, gTrue, gFalse);
+      doc->displayPage(textOut, NULL, pg, 72, 72, 0, gFalse, gTrue, gFalse);
       if (textOut->findText(u, len, gTrue, gTrue, gFalse, gFalse,
 			    caseSensitive, backward, wholeWord,
 			    &xMin, &yMin, &xMax, &yMax)) {
@@ -1558,7 +1558,7 @@ GBool PDFCore::findU(Unicode *u, int len, GBool caseSensitive,
     for (pg = backward ? doc->getNumPages() : 1;
 	 backward ? pg > topPage : pg < topPage;
 	 pg += backward ? -1 : 1) {
-      doc->displayPage(textOut, pg, 72, 72, 0, gFalse, gTrue, gFalse);
+      doc->displayPage(textOut, NULL, pg, 72, 72, 0, gFalse, gTrue, gFalse);
       if (textOut->findText(u, len, gTrue, gTrue, gFalse, gFalse,
 			    caseSensitive, backward, wholeWord,
 			    &xMin, &yMin, &xMax, &yMax)) {
@@ -1625,7 +1625,7 @@ GList *PDFCore::findAll(Unicode *u, int len, GBool caseSensitive,
   }
 
   for (int pg = firstPage; pg <= lastPage; ++pg) {
-    doc->displayPage(textOut, pg, 72, 72, 0, gFalse, gTrue, gFalse);
+    doc->displayPage(textOut, NULL, pg, 72, 72, 0, gFalse, gTrue, gFalse);
     GBool first = gTrue;
     while (1) {
       double xMin, yMin, xMax, yMax;
@@ -1664,7 +1664,7 @@ GList *AsyncFindAll::run(PDFDoc *doc, Unicode *u, int len, GBool caseSensitive,
   }
 
   for (int pg = firstPage; pg <= lastPage && !canceled; ++pg) {
-    doc->displayPage(textOut, pg, 72, 72, 0, gFalse, gTrue, gFalse);
+    doc->displayPage(textOut, NULL, pg, 72, 72, 0, gFalse, gTrue, gFalse);
     GBool first = gTrue;
     while (!canceled) {
       double xMin, yMin, xMax, yMax;
@@ -1967,7 +1967,8 @@ void PDFCore::loadText(int pg) {
   if (!textOut->isOk()) {
     text = new TextPage(&textOutCtrl);
   } else {
-    doc->displayPage(textOut, pg, dpi, dpi, rotate, gFalse, gTrue, gFalse);
+    doc->displayPage(textOut, NULL, pg, dpi, dpi, rotate,
+		     gFalse, gTrue, gFalse);
     text = textOut->takeText();
   }
   delete textOut;

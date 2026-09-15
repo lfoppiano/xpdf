@@ -1,7 +1,7 @@
-.\" Copyright 2002-2024 Glyph & Cog, LLC
-.TH xpdfrc 5 "08 Feb 2024"
+.\" Copyright 2002-2025 Glyph & Cog, LLC
+.TH xpdfrc 5 "14 Nov 2025"
 .SH NAME
-xpdfrc \- configuration file for Xpdf tools (version 4.05)
+xpdfrc \- configuration file for Xpdf tools (version 4.06)
 .SH DESCRIPTION
 All of the Xpdf tools read a single configuration file.
 .PP
@@ -469,6 +469,12 @@ If set to "no", pdftotext will attempt to place rotated text into the
 "correct" location in the output. If set to "yes", when using reading
 order mode, pdftotext will append rotated text to the end, after
 unrotated text. This defaults to "no".
+.TP
+.BI discardCoveredText " yes | no"
+If set to "yes", the xpdf tools will discard all text drawn before
+("under") a full-page fill. If set to "no", such text will be marked
+as invisible (only relevant for pdftohtml), but not discarded. This
+defaults to "no".
 .SH RASTERIZER SETTINGS
 .TP
 .BR enableFreeType " yes | no"
@@ -611,6 +617,9 @@ xpdf to use an internal default size.
 .TP
 .BR initialSelectMode " block | linear"
 Sets the initial selection mode.  The default setting is "linear".
+.TP
+.BI initialMaximized " yes | no"
+If set to "yes", xpdf windows open maximized. The default is "no".
 .TP
 .BI paperColor " color"
 Set the "paper color", i.e., the background of the page display.  The
@@ -799,6 +808,12 @@ parse the XFA form and use certain XFA information to override
 AcroForm information.  If set to "no", the XFA form will not be read.
 The default value is "yes".
 .TP
+.BI preferXFAFieldValues " yes | no"
+If set to "yes", Xpdf will use the XFA field value if present, and
+fall back to the AcroForm value otherwise. If set to "no", Xpdf will
+use the AcroForm value, and completely ignore the XFA value. The
+default value is "yes".
+.TP
 .BI savePageNumbers " yes | no"
 If set to "yes", xpdf will save the current page numbers of all open
 files in ~/.xpdf.pages when the files are closed (or when quitting
@@ -879,7 +894,7 @@ Depending on build options, it may be placed elsewhere.
 This is the user's configuration file.  If it exists, it will be read
 in place of the system-wide file.
 .SH AUTHOR
-The Xpdf software and documentation are copyright 1996-2024 Glyph &
+The Xpdf software and documentation are copyright 1996-2025 Glyph &
 Cog, LLC.
 .SH "SEE ALSO"
 .BR xpdf (1),

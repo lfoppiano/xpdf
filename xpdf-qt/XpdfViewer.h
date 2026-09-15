@@ -164,6 +164,12 @@ public:
   // Returns true if this viewer contains a single empty tab.
   GBool isEmpty();
 
+  // Goto [page] in the current tab.
+  void gotoPage(int page);
+
+  // Goto [destName] in the current tab.
+  void gotoNamedDestination(QString destName);
+
 public slots:
 
   bool close();
@@ -194,6 +200,7 @@ private slots:
 
   void openMenuAction();
   void openInNewWinMenuAction();
+  void closeMenuAction();
   void reloadMenuAction();
   void saveAsMenuAction();
   void loadSessionMenuAction();
@@ -209,6 +216,7 @@ private slots:
   void sideBySideContinuousModeMenuAction();
   void horizontalContinuousModeMenuAction();
   void fullScreenMenuAction(bool checked);
+  void reverseVideoMenuAction(bool checked);
   void rotateClockwiseMenuAction();
   void rotateCounterclockwiseMenuAction();
   void zoomToSelectionMenuAction();
@@ -310,6 +318,7 @@ private:
   void cmdNextPage(GString *args[], int nArgs, QInputEvent *event);
   void cmdNextPageNoScroll(GString *args[], int nArgs, QInputEvent *event);
   void cmdNextTab(GString *args[], int nArgs, QInputEvent *event);
+  void cmdNormalVideoMode(GString *args[], int nArgs, QInputEvent *event);
   void cmdOpen(GString *args[], int nArgs, QInputEvent *event);
   void cmdOpenErrorWindow(GString *args[], int nArgs, QInputEvent *event);
   void cmdOpenFile(GString *args[], int nArgs, QInputEvent *event);
@@ -335,6 +344,7 @@ private:
   void cmdQuit(GString *args[], int nArgs, QInputEvent *event);
   void cmdRaise(GString *args[], int nArgs, QInputEvent *event);
   void cmdReload(GString *args[], int nArgs, QInputEvent *event);
+  void cmdReverseVideoMode(GString *args[], int nArgs, QInputEvent *event);
   void cmdRotateCW(GString *args[], int nArgs, QInputEvent *event);
   void cmdRotateCCW(GString *args[], int nArgs, QInputEvent *event);
   void cmdRun(GString *args[], int nArgs, QInputEvent *event);
@@ -376,6 +386,7 @@ private:
   void cmdToggleContinuousMode(GString *args[], int nArgs, QInputEvent *event);
   void cmdToggleFullScreenMode(GString *args[], int nArgs, QInputEvent *event);
   void cmdToggleMenuBar(GString *args[], int nArgs, QInputEvent *event);
+  void cmdToggleReverseVideoMode(GString *args[], int nArgs, QInputEvent *event);
   void cmdToggleSelectMode(GString *args[], int nArgs, QInputEvent *event);
   void cmdToggleSidebar(GString *args[], int nArgs, QInputEvent *event);
   void cmdToggleSidebarMoveResizeWin(GString *args[], int nArgs, QInputEvent *event);
@@ -455,6 +466,7 @@ private:
   QMenuBar *mainMenu;
   QMenu *displayModeSubmenu;
   QAction *fullScreenMenuItem;
+  QAction *reverseVideoMenuItem;
   QAction *toggleToolbarMenuItem;
   QAction *toggleSidebarMenuItem;
   QAction *viewPageLabelsMenuItem;
@@ -498,6 +510,8 @@ private:
   GList *tabInfo;		// [XpdfTabInfo]
   XpdfTabInfo *currentTab;
   XpdfTabInfo *lastOpenedTab;
+
+  bool reverseVideo;
 
   double scaleFactor;
 

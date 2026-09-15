@@ -53,6 +53,7 @@ SplashState::SplashState(int width, int height, GBool vectorAntialias,
   lineDashLength = 0;
   lineDashPhase = 0;
   strokeAdjust = splashStrokeAdjustOff;
+  alphaIsShape = gFalse;
   clip = new SplashClip(0, 0, width, height);
   clipIsShared = gFalse;
   softMask = NULL;
@@ -116,6 +117,7 @@ SplashState::SplashState(int width, int height, GBool vectorAntialias,
   lineDashLength = 0;
   lineDashPhase = 0;
   strokeAdjust = splashStrokeAdjustOff;
+  alphaIsShape = gFalse;
   clip = new SplashClip(0, 0, width, height);
   clipIsShared = gFalse;
   softMask = NULL;
@@ -178,6 +180,7 @@ SplashState::SplashState(SplashState *state) {
   }
   lineDashPhase = state->lineDashPhase;
   strokeAdjust = state->strokeAdjust;
+  alphaIsShape = state->alphaIsShape;
   clip = state->clip;
   clipIsShared = gTrue;
   softMask = state->softMask;

@@ -19,6 +19,7 @@
 
 class Gfx8BitFont;
 class SplashBitmap;
+class SplashBitmapMemCache;
 class Splash;
 class SplashPath;
 class SplashPattern;
@@ -101,6 +102,7 @@ public:
   virtual void updateStrokeOpacity(GfxState *state);
   virtual void updateRenderingIntent(GfxState *state);
   virtual void updateTransfer(GfxState *state);
+  virtual void updateAlphaIsShape(GfxState *state);
 
   //----- update text state
   virtual void updateFont(GfxState *state);
@@ -239,6 +241,8 @@ public:
   // Get the screen parameters.
   SplashScreenParams *getScreenParams() { return &screenParams; }
 
+  SplashBitmapMemCache *getBitmapMemCache() { return bitmapMemCache; }
+
 private:
 
   void setupScreenParams(double hDPI, double vDPI);
@@ -263,13 +267,47 @@ private:
   static GBool imageMaskSrc(void *data, Guchar *line);
   static GBool imageSrc(void *data, SplashColorPtr colorLine,
 			Guchar *alphaLine);
+  static GBool imageLookup1Src(void *data, SplashColorPtr colorLine,
+			       Guchar *alphaLine);
+  static GBool imageLookup2Src(void *data, SplashColorPtr colorLine,
+			       Guchar *alphaLine);
   static GBool alphaImageSrc(void *data, SplashColorPtr line,
 			     Guchar *alphaLine);
+  static GBool alphaImageLookup1Src(void *data, SplashColorPtr line,
+				    Guchar *alphaLine);
+  static GBool alphaImageLookup2Src(void *data, SplashColorPtr line,
+				    Guchar *alphaLine);
   static GBool maskedImageSrc(void *data, SplashColorPtr line,
 			      Guchar *alphaLine);
+  static GBool maskedImageLookup1Src(void *data, SplashColorPtr line,
+				     Guchar *alphaLine);
+  void drawMaskedImage8(GfxState *state, Object *ref,
+			Stream *str, int width, int height,
+			GfxImageColorMap *colorMap,
+			Object *maskRef, Stream *maskStr,
+			int maskWidth, int maskHeight,
+			GBool maskInvert, GBool interpolate);
   static GBool softMaskMatteImageSrc(void *data,
 				     SplashColorPtr colorLine,
 				     Guchar *alphaLine);
+  void drawSoftMaskedImage8(GfxState *state, Object *ref,
+			    Stream *str, int width, int height,
+			    GfxImageColorMap *colorMap,
+			    Object *maskRef, Stream *maskStr,
+			    int maskWidth, int maskHeight,
+			    GfxImageColorMap *maskColorMap,
+			    double *matte, GBool interpolate);
+  void drawSoftMaskedMatteImage8(GfxState *state, Object *ref,
+				 Stream *str, int width, int height,
+				 GfxImageColorMap *colorMap,
+				 Object *maskRef, Stream *maskStr,
+				 int maskWidth, int maskHeight,
+				 GfxImageColorMap *maskColorMap,
+				 double *matte, GBool interpolate);
+  SplashColorPtr buildColorMapLookupTable1Idx(GfxImageColorMap *colorMap,
+					      GfxState *state);
+  SplashColorPtr buildColorMapLookupTable2Idx(GfxImageColorMap *colorMap,
+					      GfxState *state);
   GString *makeImageTag(Object *ref, GfxRenderingIntent ri,
 			GfxColorSpace *colorSpace);
   void reduceImageResolution(Stream *str, double *mat,
@@ -279,9 +317,6 @@ private:
 		       double xMin, double yMin,
 		       double xMax, double yMax);
   void copyState(Splash *oldSplash, GBool copyColors);
-#if 1 //~tmp: turn off anti-aliasing temporarily
-  void setInShading(GBool sh);
-#endif
 
   SplashColorMode colorMode;
   int bitmapRowPad;
@@ -300,6 +335,7 @@ private:
   XRef *xref;			// xref table for current document
 
   SplashBitmap *bitmap;
+  SplashBitmapMemCache *bitmapMemCache;
   Splash *splash;
   SplashFontEngine *fontEngine;
 
@@ -307,6 +343,11 @@ private:
     t3FontCache[splashOutT3FontCacheSize];
   int nT3Fonts;			// number of valid entries in t3FontCache
   T3GlyphStack *t3GlyphStack;	// Type 3 glyph context stack
+
+  Ref tileCacheRef;
+  double tileCacheBaseMatrix[6];
+  SplashBitmap *tileCacheBitmap;
+  Guint *tileCacheOverprintMaskBitmap;
 
   SplashFont *font;		// current font
   GBool needFontUpdate;		// set when the font needs to be updated

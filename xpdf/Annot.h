@@ -10,6 +10,9 @@
 #define ANNOT_H
 
 #include <aconf.h>
+#if MULTITHREADED
+#include "GMutex.h"
+#endif
 
 class XRef;
 class Catalog;
@@ -178,6 +181,9 @@ private:
   PageAnnots **pageAnnots;	// list of annots for each page
   int formFieldRefsSize;	// number of entries in formFieldRefs[]
   char *formFieldRefs;		// set of AcroForm field refs
+#if MULTITHREADED
+  GMutex mutex;
+#endif
 };
 
 #endif
