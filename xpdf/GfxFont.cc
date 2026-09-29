@@ -953,6 +953,122 @@ char *GfxFont::readEmbFontFile(XRef *xref, int *len) {
 // Gfx8BitFont
 //------------------------------------------------------------------------
 
+// Maximum number of Unicode values one glyph name can expand to
+// (ligatures such as "f_f_i", or "uni" followed by several values).
+#define glyphNameMaxUnicode 8
+
+// Map one component of a glyph name, [s, s+n), to Unicode.  This is step
+// 3 of the Adobe Glyph List Specification ("Working backward from glyph
+// names to Unicode strings"): a name in the name-to-Unicode table, 'uni'
+// followed by groups of four uppercase hex digits, or 'u' followed by
+// four to six uppercase hex digits.
+//
+// TeX fonts add a convention of their own: the larger variants of a
+// delimiter or operator are named after the base glyph plus a size
+// suffix ("parenleftbig", "parenleftBigg", "summationdisplay"); they
+// stand for the same character.
+//
+// Returns the number of Unicode values written to <u>, or 0 if the
+// component can't be mapped.
+static int mapGlyphNameComponent(const char *s, int n,
+				 Unicode *u, int uSize) {
+  static const char *sizeSuffixes[] = {
+    "bigg", "Bigg", "big", "Big", "display", "text"
+  };
+  char buf[64];
+  Unicode v;
+  int nDigits, i, j, k, m;
+
+  if (n <= 0 || n >= (int)sizeof(buf) || uSize < 1) {
+    return 0;
+  }
+  memcpy(buf, s, n);
+  buf[n] = '\0';
+
+  if ((v = globalParams->mapNameToUnicode(buf))) {
+    u[0] = v;
+    return 1;
+  }
+
+  // count the uppercase hex digits following 'uni' or 'u'
+  i = (n > 3 && !strncmp(buf, "uni", 3)) ? 3 : (buf[0] == 'u' ? 1 : 0);
+  if (i) {
+    for (nDigits = 0;
+	 (buf[i + nDigits] >= '0' && buf[i + nDigits] <= '9') ||
+	   (buf[i + nDigits] >= 'A' && buf[i + nDigits] <= 'F');
+	 ++nDigits) ;
+    if (i + nDigits == n) {
+      if (i == 3 && nDigits >= 4 && nDigits % 4 == 0 &&
+	  nDigits / 4 <= uSize) {
+	for (j = 0; j < nDigits / 4; ++j) {
+	  v = 0;
+	  for (k = 0; k < 4; ++k) {
+	    m = buf[3 + 4*j + k];
+	    v = (v << 4) + (Unicode)(m <= '9' ? m - '0' : m - 'A' + 10);
+	  }
+	  if (v == 0 || (v >= 0xd800 && v <= 0xdfff)) {
+	    return 0;
+	  }
+	  u[j] = v;
+	}
+	return nDigits / 4;
+      }
+      if (i == 1 && nDigits >= 4 && nDigits <= 6) {
+	v = (Unicode)strtoul(buf + 1, NULL, 16);
+	if (v == 0 || v > 0x10ffff || (v >= 0xd800 && v <= 0xdfff)) {
+	  return 0;
+	}
+	u[0] = v;
+	return 1;
+      }
+    }
+  }
+
+  // TeX size variants
+  for (i = 0; i < (int)(sizeof(sizeSuffixes) / sizeof(sizeSuffixes[0])); ++i) {
+    m = (int)strlen(sizeSuffixes[i]);
+    if (n > m && !strcmp(buf + n - m, sizeSuffixes[i])) {
+      buf[n - m] = '\0';
+      if ((v = globalParams->mapNameToUnicode(buf))) {
+	u[0] = v;
+	return 1;
+      }
+      buf[n - m] = sizeSuffixes[i][0];
+    }
+  }
+
+  return 0;
+}
+
+// Map a glyph name that is not in the name-to-Unicode table, following
+// the Adobe Glyph List Specification: drop everything from the first
+// period ("a.sc", "one.pnum"), split what is left into components at
+// the underscores ("f_f_i"), and map each component.  Every component
+// has to map, otherwise the name is left to the other heuristics.
+//
+// Returns the number of Unicode values written to <u>, or 0.
+static int mapGlyphNameToUnicode(const char *charName,
+				 Unicode *u, int uSize) {
+  const char *end, *p, *q;
+  int n, k;
+
+  if (charName[0] == '.') {
+    return 0;
+  }
+  if (!(end = strchr(charName, '.'))) {
+    end = charName + strlen(charName);
+  }
+  n = 0;
+  for (p = charName; p <= end; p = q + 1) {
+    for (q = p; q < end && *q != '_'; ++q) ;
+    if (!(k = mapGlyphNameComponent(p, (int)(q - p), u + n, uSize - n))) {
+      return 0;
+    }
+    n += k;
+  }
+  return n;
+}
+
 // Microsoft "MSTT31c..." subset fonts (Type1/Type1C and Type3) name their
 // glyphs 'G' + the glyph index in *hex*, with the glyph ordering shifted by
 // one (glyph 0 / .notdef dropped): e.g. "G34" (0x34) is Mac glyph 0x35 = 'R'.
@@ -1051,6 +1167,8 @@ Gfx8BitFont::Gfx8BitFont(XRef *xref, const char *tagA, Ref idA, GString *nameA,
   char *charName;
   GBool missing, hex;
   Unicode toUnicode[256];
+  Unicode *toUnicodeSeq[256];
+  int toUnicodeSeqLen[256];
   CharCodeToUnicode *utu, *ctu2;
   Unicode uBuf[8];
   double mul;
@@ -1338,12 +1456,28 @@ Gfx8BitFont::Gfx8BitFont(XRef *xref, const char *tagA, Ref idA, GString *nameA,
 
   //----- build the mapping to Unicode -----
 
-  // pass 1: use the name-to-Unicode mapping table
+  // pass 1: use the name-to-Unicode mapping table, then the rules of
+  // the Adobe Glyph List Specification for the names it doesn't hold.
+  // Type3 fonts are left out: their glyph names are CharProcs keys,
+  // and a name such as "uni00AD" is commonly given to the glyph drawn
+  // for a plain hyphen, which the identity mapping below gets right.
   missing = hex = gFalse;
   for (code = 0; code < 256; ++code) {
+    toUnicodeSeq[code] = NULL;
+    toUnicodeSeqLen[code] = 0;
     if ((charName = enc[code])) {
       if (!(toUnicode[code] = globalParams->mapNameToUnicode(charName)) &&
-	  strcmp(charName, ".notdef")) {
+	  type != fontType3 &&
+	  (n = mapGlyphNameToUnicode(charName, uBuf,
+					glyphNameMaxUnicode)) > 0) {
+	toUnicode[code] = uBuf[0];
+	if (n > 1) {
+	  toUnicodeSeq[code] = (Unicode *)gmallocn(n, sizeof(Unicode));
+	  memcpy(toUnicodeSeq[code], uBuf, n * sizeof(Unicode));
+	  toUnicodeSeqLen[code] = n;
+	}
+      }
+      if (!toUnicode[code] && strcmp(charName, ".notdef")) {
 	// if it wasn't in the name-to-Unicode table, check for a
 	// name that looks like 'Axx' or 'xx', where 'A' is any letter
 	// and 'xx' is two hex digits
@@ -1453,6 +1587,16 @@ Gfx8BitFont::Gfx8BitFont(XRef *xref, const char *tagA, Ref idA, GString *nameA,
 
   // construct the char code -> Unicode mapping object
   ctu = CharCodeToUnicode::make8BitToUnicode(toUnicode);
+  for (code = 0; code < 256; ++code) {
+    if (toUnicodeSeq[code]) {
+      // glyph names standing for several characters (ligatures)
+      if (toUnicode[code] == toUnicodeSeq[code][0]) {
+	ctu->setMapping((CharCode)code, toUnicodeSeq[code],
+			toUnicodeSeqLen[code]);
+      }
+      gfree(toUnicodeSeq[code]);
+    }
+  }
 
   // merge in a ToUnicode CMap, if there is one -- this overwrites
   // existing entries in ctu, i.e., the ToUnicode CMap takes
