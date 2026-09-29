@@ -1107,9 +1107,11 @@ static Unicode mapHexGlyphIndexName(const char *charName) {
 static Unicode mapGlyphIndexName(const char *charName) {
   // Glyph-index naming conventions used by various subsetters: a known
   // prefix followed by the glyph index in the standard Macintosh glyph
-  // ordering.  Listed longest-first so the longest matching prefix wins
-  // (e.g. "cid" before "c"), and matched case-insensitively.
-  static const char *prefixes[] = { "glyph", "index", "cid", "g", "c" };
+  // ordering, matched case-insensitively.  A bare "c" is not one of
+  // them: the symbol fonts of several publishers (AdvP...) name their
+  // glyphs "C" + the character code ("C176" is the degree sign), which
+  // the numeric heuristic of pass 2 reads correctly.
+  static const char *prefixes[] = { "glyph", "index", "cid", "g" };
   const char *digits, *p, *macName;
   Unicode u;
   int i, j;
